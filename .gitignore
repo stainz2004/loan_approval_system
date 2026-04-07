@@ -1,0 +1,12 @@
+# IDE
+.idea/
+.vscode/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+*.orig
+*.rej
+.cache/
