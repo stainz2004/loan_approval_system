@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,14 +38,21 @@ public class PaymentScheduleGenerator {
         BigDecimal monthlyPayment = calculateMonthlyPayment(totalAmount, months);
         BigDecimal remainingBalance = totalAmount;
 
+        LocalDate firstPaymentDate = LocalDate.now();
+
         for (int i = 1; i <= months; i++) {
             PaymentScheduleItem item = new PaymentScheduleItem();
             item.setPaymentSchedule(schedule);
             item.setPaymentNumber(i);
+
             BigDecimal paymentAmount = (i == months) ? remainingBalance : monthlyPayment;
             item.setTotalAmount(paymentAmount);
+
             remainingBalance = remainingBalance.subtract(paymentAmount);
             item.setRemainingBalance(remainingBalance.setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP));
+
+            LocalDate dueDate = firstPaymentDate.plusMonths(i - 1);
+            item.setDueDate(dueDate);
 
             items.add(item);
         }

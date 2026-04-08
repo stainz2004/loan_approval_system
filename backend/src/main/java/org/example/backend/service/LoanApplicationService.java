@@ -1,9 +1,11 @@
 package org.example.backend.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
 import org.example.backend.dto.LoanApplicationStatus;
+import org.example.backend.dto.ValidationDecision;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
 import org.example.backend.mapper.LoanApplicationMapper;
@@ -29,21 +31,28 @@ public class LoanApplicationService {
      *
      * @param request The loan application request containing the necessary information to create a loan application.
      */
-    public void createLoanApplication(LoanApplicationRequest request) {
-        loanApplicationValidator.validateCreateRequest(request);
-
+    @Transactional
+    public ValidationDecision createLoanApplication(LoanApplicationRequest request) {
         LoanApplication application = loanApplicationMapper.toEntity(request);
 
         loanApplicationRepository.save(application);
+
+        ValidationDecision decision = loanApplicationValidator.validateCreateRequest(request);
+
+        if (!decision.isAccepted()) {
+            application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);
+            application.setRejectionReason(decision.getRejectionReason());
+            return decision;
+        }
 
         PaymentSchedule schedule = paymentScheduleGenerator.generateSchedule(application);
         paymentScheduleRepository.save(schedule);
 
         application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
-        loanApplicationRepository.save(application);
+        return decision;
     }
 
     public List<LoanApplicationResponse> getLoanApplications() {
-        // TODO
+        return null;
     }
 }
