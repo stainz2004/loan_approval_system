@@ -4,5 +4,80 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    
+    <changeSet id="08.04.2026-12:30" author="Sander R">
+        <createTable tableName="loan_application">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"  nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="personal_code" type="varchar(11)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loan_period_months" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="interest_margin" type="numeric(10,3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_interest" type="numeric(10, 3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loan_amount" type="numeric(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rejection_reason" type="varchar(20)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="08.04.2026-12:38" author="Sander R">
+        <createTable tableName="payment_schedule">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="loan_application_id" type="bigint">
+                <constraints nullable="false" unique="true" foreignKeyName="fk_payment_schedule_loan_application" references="loan_application(id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="08.04.2026-12:41" author="Sander R">
+        <createTable tableName="payment_schedule_item">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="payment_schedule_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_payment_schedule_item_schedule" references="payment_schedule(id)"/>
+            </column>
+            <column name="payment_number" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="due_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_amount" type="numeric(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="remaining_balance" type="numeric(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="08.04.2026-12:59" author="Sander R">
+        <createIndex indexName="idx_loan_application_personal_code_status"
+                     tableName="loan_application">
+            <column name="personal_code"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>
