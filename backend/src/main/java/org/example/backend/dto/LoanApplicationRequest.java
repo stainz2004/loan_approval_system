@@ -1,33 +1,44 @@
 package org.example.backend.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class LoanApplicationRequest {
 
-    @NotNull
+    @NotBlank
     @Size(max = 32)
     private String firstName;
 
-    @NotNull
+    @NotBlank
     @Size(max = 32)
     private String lastName;
 
-    @NotNull
-    private String idCode;
+    @NotBlank
+    @Size(min = 11, max = 11)
+    private String personalCode;
 
+    @NotNull
     @Max(360)
     @Min(6)
-    private int loanLength;
+    private Integer loanPeriodMonths;
 
-    private double interest;
+    @NotNull
+    @DecimalMin("0.0")
+    private BigDecimal interestMargin;
 
-    private double baseInterest;
+    @NotNull
+    @DecimalMin("0.0")
+    private BigDecimal baseInterest;
 
-    @Min(5000)
-    private long loanAmount;
+    @NotNull
+    @DecimalMin("5000.0")
+    private BigDecimal loanAmount;
 }

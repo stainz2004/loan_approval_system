@@ -1,7 +1,7 @@
 package org.example.backend.dto;
 
 public enum LoanApplicationStatus {
-    SUBMITTED,
+    STARTED,
     IN_REVIEW,
     APPROVED,
     REJECTED
