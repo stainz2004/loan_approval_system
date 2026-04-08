@@ -15,6 +15,12 @@ public class PaymentScheduleGenerator {
 
     private static final int CURRENCY_DECIMAL_PLACES = 2;
 
+    /**
+     * Generates a payment schedule for a given loan application.
+     *
+     * @param loanApplication The loan application for which to generate the payment schedule.
+     * @return A PaymentSchedule object containing the payment schedule items.
+     */
     public PaymentSchedule generateSchedule(LoanApplication loanApplication) {
         PaymentSchedule schedule = new PaymentSchedule();
         schedule.setLoanApplication(loanApplication);
@@ -47,10 +53,25 @@ public class PaymentScheduleGenerator {
         return schedule;
     }
 
+    /**
+     * Calculates the monthly payment amount based on the total loan amount and the number of months.
+     *
+     * @param totalLoan The total loan amount including interest.
+     * @param months The loan period in months.
+     * @return The calculated monthly payment amount, rounded to 2 decimal places.
+     */
     private BigDecimal calculateMonthlyPayment(BigDecimal totalLoan, int months) {
         return totalLoan.divide(BigDecimal.valueOf(months), CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Calculates the total loan amount including interest based on the loan amount, interest margin, and base interest.
+     *
+     * @param loanAmount The original loan amount requested.
+     * @param interestMargin The interest margin applied to the base interest.
+     * @param baseInterest The base interest rate for the loan.
+     * @return The total loan amount including interest, rounded to 2 decimal places.
+     */
     private BigDecimal calculateTotalLoanAmount(BigDecimal loanAmount, BigDecimal interestMargin, BigDecimal baseInterest) {
         BigDecimal interestMultiplier = interestMargin.multiply(baseInterest);
         return loanAmount.multiply(interestMultiplier).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);

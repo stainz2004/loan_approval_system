@@ -10,6 +10,10 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO representing a loan application request. This class contains the necessary fields for creating a loan application,
+ * along with validation annotations to ensure that the input data is valid.
+ */
 @Data
 public class LoanApplicationRequest {
 
