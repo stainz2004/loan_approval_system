@@ -40,6 +40,12 @@ public class LoanApplicationValidator {
         }
     }
 
+    /**
+     * Parser for personal code.
+     *
+     * @param personalCode Customers personal code.
+     * @return Customers birthdate in right format.
+     */
     private LocalDate parseBirthDate(String personalCode) {
         try {
             int firstNumber = Character.getNumericValue(personalCode.charAt(0));
