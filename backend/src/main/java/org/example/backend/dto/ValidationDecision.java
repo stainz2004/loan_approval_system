@@ -1,11 +1,12 @@
 package org.example.backend.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+public record ValidationDecision(boolean isAccepted, LoanRejectionReason rejectionReason) {
 
-@AllArgsConstructor
-@Data
-public class ValidationDecision {
-    private boolean accepted;
-    private String rejectionReason;
+    public static ValidationDecision accepted() {
+        return new ValidationDecision(true, null);
+    }
+
+    public static ValidationDecision rejected(LoanRejectionReason reason) {
+        return new ValidationDecision(false, reason);
+    }
 }

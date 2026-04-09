@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationStatus;
+import org.example.backend.dto.LoanRejectionReason;
 import org.example.backend.dto.ValidationDecision;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
@@ -31,22 +32,31 @@ public class LoanApplicationService {
      */
     @Transactional
     public ValidationDecision createLoanApplication(LoanApplicationRequest request) {
+        if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
+                request.getPersonalCode(),
+                LoanApplicationStatus.IN_REVIEW)) {
+            throw new IllegalStateException("Customer already has an active IN_REVIEW application.");
+        }
+
+        loanApplicationValidator.validateCustomerPersonalCode(request.getPersonalCode());
+
+        ValidationDecision decision = loanApplicationValidator.validateAge(request.getPersonalCode());
+
         LoanApplication application = loanApplicationMapper.toEntity(request);
-
-        loanApplicationRepository.save(application);
-
-        ValidationDecision decision = loanApplicationValidator.validateCreateRequest(request);
 
         if (!decision.isAccepted()) {
             application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);
-            application.setRejectionReason(decision.getRejectionReason());
+            application.setRejectionReason(decision.rejectionReason());
+            loanApplicationRepository.save(application);
             return decision;
         }
+
+        application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
+        loanApplicationRepository.save(application);
 
         PaymentSchedule schedule = paymentScheduleGenerator.generateSchedule(application);
         paymentScheduleRepository.save(schedule);
 
-        application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
         return decision;
     }
 
@@ -59,7 +69,7 @@ public class LoanApplicationService {
     }
 
     @Transactional
-    public void rejectLoanApplication(Long id, String reason) {
+    public void rejectLoanApplication(Long id, LoanRejectionReason reason) {
         LoanApplication application = getApplicationOrThrow(id);
         assertInReview(application, "reject");
         application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);

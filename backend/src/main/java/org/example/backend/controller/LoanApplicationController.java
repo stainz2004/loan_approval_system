@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
+import org.example.backend.dto.LoanRejectionReason;
 import org.example.backend.dto.ValidationDecision;
 import org.example.backend.service.LoanApplicationQueryService;
 import org.example.backend.service.LoanApplicationService;
@@ -37,7 +38,7 @@ public class LoanApplicationController {
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<Void> rejectLoanApplication(@PathVariable Long id, @RequestParam String reason) {
+    public ResponseEntity<Void> rejectLoanApplication(@PathVariable Long id, @RequestParam LoanRejectionReason reason) {
         loanApplicationService.rejectLoanApplication(id, reason);
         return ResponseEntity.ok().build();
     }

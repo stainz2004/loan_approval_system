@@ -12,4 +12,6 @@ import java.util.List;
 public interface LoanApplicationRepository extends JpaRepository<LoanApplication, Long> {
 
     List<LoanApplication> findByLoanApplicationStatus(LoanApplicationStatus status);
+
+    boolean existsByPersonalCodeAndLoanApplicationStatus(String personalCode, LoanApplicationStatus loanApplicationStatus);
 }

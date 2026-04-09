@@ -6,6 +6,7 @@ import org.example.backend.entity.PaymentScheduleItem;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import java.util.List;
 public class PaymentScheduleGenerator {
 
     private static final int CURRENCY_DECIMAL_PLACES = 2;
+    private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
+    private static final BigDecimal MONTHS_IN_YEAR = BigDecimal.valueOf(12);
 
     /**
      * Generates a payment schedule for a given loan application.
@@ -28,31 +31,39 @@ public class PaymentScheduleGenerator {
 
         List<PaymentScheduleItem> items = new ArrayList<>();
 
-        BigDecimal totalAmount = calculateTotalLoanAmount(
-                loanApplication.getLoanAmount(),
+        LocalDate firstPaymentDate = LocalDate.now();
+        BigDecimal remainingBalance = loanApplication.getLoanAmount();
+        int months = loanApplication.getLoanPeriodMonths();
+
+        BigDecimal monthlyRate = calculateMonthlyInterestRate(
                 loanApplication.getInterestMargin(),
                 loanApplication.getBaseInterest()
         );
 
-        int months = loanApplication.getLoanPeriodMonths();
-        BigDecimal monthlyPayment = calculateMonthlyPayment(totalAmount, months);
-        BigDecimal remainingBalance = totalAmount;
+        BigDecimal monthlyInstallment = calculateMonthlyPayment(
+                loanApplication.getLoanAmount(),
+                monthlyRate,
+                months
+        );
 
-        LocalDate firstPaymentDate = LocalDate.now();
-
-        for (int i = 1; i <= months; i++) {
+        for (int paymentNumber = 1; paymentNumber <= months; paymentNumber++) {
             PaymentScheduleItem item = new PaymentScheduleItem();
             item.setPaymentSchedule(schedule);
-            item.setPaymentNumber(i);
+            item.setPaymentNumber(paymentNumber);
+            item.setDueDate(firstPaymentDate.plusMonths(paymentNumber - 1));
 
-            BigDecimal paymentAmount = (i == months) ? remainingBalance : monthlyPayment;
-            item.setTotalAmount(paymentAmount);
+            BigDecimal interestPart = calculateInterestPart(remainingBalance, monthlyRate);
+            BigDecimal principalPart = monthlyInstallment.subtract(interestPart).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
 
-            remainingBalance = remainingBalance.subtract(paymentAmount);
-            item.setRemainingBalance(remainingBalance.setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP));
+            if (paymentNumber == months) {
+                principalPart = remainingBalance;
+                monthlyInstallment = principalPart.add(interestPart).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
+            }
 
-            LocalDate dueDate = firstPaymentDate.plusMonths(i - 1);
-            item.setDueDate(dueDate);
+            remainingBalance = remainingBalance.subtract(principalPart).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
+
+            item.setTotalAmount(monthlyInstallment);
+            item.setRemainingBalance(remainingBalance);
 
             items.add(item);
         }
@@ -64,24 +75,46 @@ public class PaymentScheduleGenerator {
     /**
      * Calculates the monthly payment amount based on the total loan amount and the number of months.
      *
-     * @param totalLoan The total loan amount including interest.
      * @param months The loan period in months.
      * @return The calculated monthly payment amount, rounded to 2 decimal places.
      */
-    private BigDecimal calculateMonthlyPayment(BigDecimal totalLoan, int months) {
-        return totalLoan.divide(BigDecimal.valueOf(months), CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
+    private BigDecimal calculateMonthlyPayment(BigDecimal loanAmount, BigDecimal monthlyInterestRate, int months) {
+        MathContext mathContext = new MathContext(20, RoundingMode.HALF_UP);
+
+        BigDecimal onePlusInterest = BigDecimal.ONE.add(monthlyInterestRate);
+        BigDecimal onePlusInterestToMonths = onePlusInterest.pow(months, mathContext);
+
+        BigDecimal topPart = loanAmount
+                .multiply(monthlyInterestRate)
+                .multiply(onePlusInterestToMonths, mathContext);
+
+        BigDecimal bottomPart = onePlusInterestToMonths.subtract(BigDecimal.ONE, mathContext);
+
+        return topPart
+                .divide(bottomPart, mathContext)
+                .setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
     }
 
     /**
-     * Calculates the total loan amount including interest based on the loan amount, interest margin, and base interest.
      *
-     * @param loanAmount The original loan amount requested.
-     * @param interestMargin The interest margin applied to the base interest.
-     * @param baseInterest The base interest rate for the loan.
-     * @return The total loan amount including interest, rounded to 2 decimal places.
+     * @param interestMargin
+     * @param baseInterest
+     * @return
      */
-    private BigDecimal calculateTotalLoanAmount(BigDecimal loanAmount, BigDecimal interestMargin, BigDecimal baseInterest) {
-        BigDecimal interestMultiplier = interestMargin.multiply(baseInterest);
-        return loanAmount.multiply(interestMultiplier).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
+    private BigDecimal calculateMonthlyInterestRate(BigDecimal interestMargin, BigDecimal baseInterest) {
+        return interestMargin
+                .add(baseInterest)
+                .divide(ONE_HUNDRED, 10, RoundingMode.HALF_UP)
+                .divide(MONTHS_IN_YEAR, 10, RoundingMode.HALF_UP);
+    }
+
+    /**
+     *
+     * @param remainingBalance
+     * @param monthlyRate
+     * @return
+     */
+    private BigDecimal calculateInterestPart(BigDecimal remainingBalance, BigDecimal monthlyRate) {
+        return remainingBalance.multiply(monthlyRate).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);
     }
 }

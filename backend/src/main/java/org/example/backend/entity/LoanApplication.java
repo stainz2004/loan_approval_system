@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.backend.dto.LoanApplicationStatus;
+import org.example.backend.dto.LoanRejectionReason;
 
 import java.math.BigDecimal;
 
@@ -28,5 +29,6 @@ public class LoanApplication {
     private BigDecimal loanAmount;
     @Enumerated(EnumType.STRING)
     private LoanApplicationStatus loanApplicationStatus;
-    private String rejectionReason;
+    @Enumerated(EnumType.STRING)
+    private LoanRejectionReason rejectionReason;
 }

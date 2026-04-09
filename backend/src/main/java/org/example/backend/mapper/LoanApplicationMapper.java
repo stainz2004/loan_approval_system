@@ -12,6 +12,8 @@ import org.mapstruct.Mapping;
 public interface LoanApplicationMapper {
 
     @Mapping(target = "loanApplicationStatus", constant = "STARTED")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "rejectionReason", ignore = true)
     LoanApplication toEntity(LoanApplicationRequest request);
 
     LoanApplicationResponse toResponse(LoanApplication application, java.util.List<PaymentScheduleItem> paymentScheduleItems);

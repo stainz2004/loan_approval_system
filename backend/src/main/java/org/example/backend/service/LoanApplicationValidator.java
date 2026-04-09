@@ -1,26 +1,35 @@
 package org.example.backend.service;
 
-import org.example.backend.dto.LoanApplicationRequest;
+import lombok.RequiredArgsConstructor;
+import org.example.backend.config.LoanProperties;
+import org.example.backend.dto.LoanRejectionReason;
 import org.example.backend.dto.ValidationDecision;
 import org.example.backend.exception.InvalidPersonalCodeException;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.Period;
 
-@Service
+@Component
+@RequiredArgsConstructor
 public class LoanApplicationValidator {
 
-    public ValidationDecision validateCreateRequest(LoanApplicationRequest request) {
-        String personalCode = request.getPersonalCode();
+    private final LoanProperties loanProperties;
 
-        validateCustomerPersonalCode(personalCode);
+    /**
+     *
+     * @param personalCode
+     * @return
+     */
+    public ValidationDecision validateAge(String personalCode) {
+        int customersAge = calculateAge(parseBirthDate(personalCode));
 
-        if (calculateAge(parseBirthDate(personalCode)) > 70) {
-            return new ValidationDecision(false, "The user is too old!");
+        if (customersAge > loanProperties.maxAge()) {
+            return ValidationDecision.rejected(LoanRejectionReason.CUSTOMER_TOO_OLD);
         }
-        return new ValidationDecision(true, null);
+
+        return ValidationDecision.accepted();
     }
 
     /**
@@ -29,13 +38,26 @@ public class LoanApplicationValidator {
      *
      * @param personalCode Customers personal code.
      */
-    private void validateCustomerPersonalCode(String personalCode) {
+    public void validateCustomerPersonalCode(String personalCode) {
+        if (personalCode == null || personalCode.length() != 11 || !personalCode.chars().allMatch(Character::isDigit)) {
+            throw new InvalidPersonalCodeException("Invalid personal code!");
+        }
+
+        int firstDigit = Character.getNumericValue(personalCode.charAt(0));
+        if (firstDigit < 1 || firstDigit > 8) {
+            throw new InvalidPersonalCodeException("Invalid personal code!");
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate minAllowedBirthDate = today.minusYears(120);
 
         LocalDate birthDate = parseBirthDate(personalCode);
 
         if (birthDate.isAfter(today) || birthDate.isBefore(minAllowedBirthDate)) {
+            throw new InvalidPersonalCodeException("Invalid personal code!");
+        }
+
+        if (!isValidChecksum(personalCode)) {
             throw new InvalidPersonalCodeException("Invalid personal code!");
         }
     }
@@ -65,7 +87,44 @@ public class LoanApplicationValidator {
         }
     }
 
+    /**
+     *
+     * @param birthDate
+     * @return
+     */
     private int calculateAge(LocalDate birthDate) {
         return Period.between(birthDate, LocalDate.now()).getYears();
+    }
+
+    /**
+     *
+     * @param personalCode
+     * @return
+     */
+    private boolean isValidChecksum(String personalCode) {
+        int[] weights1 = {1,2,3,4,5,6,7,8,9,1};
+        int[] weights2 = {3,4,5,6,7,8,9,1,2,3};
+
+        int sum = 0;
+        for (int i = 0; i < 10; i++) {
+            sum += Character.getNumericValue(personalCode.charAt(i)) * weights1[i];
+        }
+
+        int control = sum % 11;
+        if (control < 10) {
+            return control == Character.getNumericValue(personalCode.charAt(10));
+        }
+
+        sum = 0;
+        for (int i = 0; i < 10; i++) {
+            sum += Character.getNumericValue(personalCode.charAt(i)) * weights2[i];
+        }
+
+        control = sum % 11;
+        if (control < 10) {
+            return control == Character.getNumericValue(personalCode.charAt(10));
+        }
+
+        return Character.getNumericValue(personalCode.charAt(10)) == 0;
     }
 }
