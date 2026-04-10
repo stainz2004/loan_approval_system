@@ -96,10 +96,11 @@ public class PaymentScheduleGenerator {
     }
 
     /**
+     * Calculates the monthly interest rate by adding the interest margin and base interest, then dividing by 100 and 12.
      *
-     * @param interestMargin
-     * @param baseInterest
-     * @return
+     * @param interestMargin The interest margin for the loan application.
+     * @param baseInterest The base interest for the loan application.
+     * @return The calculated monthly interest rate, rounded to 10 decimal places.
      */
     private BigDecimal calculateMonthlyInterestRate(BigDecimal interestMargin, BigDecimal baseInterest) {
         return interestMargin
@@ -109,10 +110,11 @@ public class PaymentScheduleGenerator {
     }
 
     /**
+     * Calculates the interest part of a monthly payment based on the remaining balance and monthly interest rate.
      *
-     * @param remainingBalance
-     * @param monthlyRate
-     * @return
+     * @param remainingBalance The remaining balance of the loan before the payment is made.
+     * @param monthlyRate The monthly interest rate for the loan.
+     * @return The calculated interest part of the monthly payment, rounded to 2 decimal places.
      */
     private BigDecimal calculateInterestPart(BigDecimal remainingBalance, BigDecimal monthlyRate) {
         return remainingBalance.multiply(monthlyRate).setScale(CURRENCY_DECIMAL_PLACES, RoundingMode.HALF_UP);

@@ -33,14 +33,14 @@ public class LoanApplicationService {
     @Transactional
     public ValidationDecision createLoanApplication(LoanApplicationRequest request) {
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
-                request.getPersonalCode(),
+                request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
             throw new IllegalStateException("Customer already has an active IN_REVIEW application.");
         }
 
-        loanApplicationValidator.validateCustomerPersonalCode(request.getPersonalCode());
+        loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
 
-        ValidationDecision decision = loanApplicationValidator.validateAge(request.getPersonalCode());
+        ValidationDecision decision = loanApplicationValidator.validateAge(request.personalCode());
 
         LoanApplication application = loanApplicationMapper.toEntity(request);
 
@@ -60,6 +60,11 @@ public class LoanApplicationService {
         return decision;
     }
 
+    /**
+     * Approves a loan application with the given ID.
+     *
+     * @param id The ID of the loan application to approve.
+     */
     @Transactional
     public void approveLoanApplication(Long id) {
         LoanApplication application = getApplicationOrThrow(id);
@@ -68,6 +73,12 @@ public class LoanApplicationService {
         loanApplicationRepository.save(application);
     }
 
+    /**
+     * Rejects a loan application with the given ID and reason.
+     *
+     * @param id     The ID of the loan application to reject.
+     * @param reason The reason for rejecting the loan application.
+     */
     @Transactional
     public void rejectLoanApplication(Long id, LoanRejectionReason reason) {
         LoanApplication application = getApplicationOrThrow(id);
@@ -77,11 +88,23 @@ public class LoanApplicationService {
         loanApplicationRepository.save(application);
     }
 
+    /**
+     * Retrieves a loan application by its ID. If the application is not found, an exception is thrown.
+     *
+     * @param id The ID of the loan application to retrieve.
+     * @return The loan application with the specified ID.
+     */
     private LoanApplication getApplicationOrThrow(Long id) {
         return loanApplicationRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Loan application not found with id: " + id));
     }
 
+    /**
+     * Asserts that the loan application is in the IN_REVIEW status. If it is not, an exception is thrown with a message indicating the allowed status and the attempted action.
+     *
+     * @param application The loan application to check.
+     * @param action      The action being attempted (e.g., "approve" or "reject") for error message clarity.
+     */
     private void assertInReview(LoanApplication application, String action) {
         if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
             throw new IllegalStateException(

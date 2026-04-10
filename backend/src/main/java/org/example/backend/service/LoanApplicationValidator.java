@@ -18,9 +18,10 @@ public class LoanApplicationValidator {
     private final LoanProperties loanProperties;
 
     /**
+     * Age validator.
      *
-     * @param personalCode
-     * @return
+     * @param personalCode Customers personal code.
+     * @return Validation decision based on the age of the customer. If the customer is too old, the decision will be rejected with the reason CUSTOMER_TOO_OLD. Otherwise, the decision will be accepted.
      */
     public ValidationDecision validateAge(String personalCode) {
         int customersAge = calculateAge(parseBirthDate(personalCode));
@@ -88,18 +89,20 @@ public class LoanApplicationValidator {
     }
 
     /**
+     * Age calculator based on birthdate.
      *
-     * @param birthDate
-     * @return
+     * @param birthDate Customers birthdate.
+     * @return Customers age in years.
      */
     private int calculateAge(LocalDate birthDate) {
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
     /**
+     * Checksum validator for personal code.
      *
-     * @param personalCode
-     * @return
+     * @param personalCode Customers personal code.
+     * @return True if the checksum is valid, false otherwise.
      */
     private boolean isValidChecksum(String personalCode) {
         int[] weights1 = {1,2,3,4,5,6,7,8,9,1};

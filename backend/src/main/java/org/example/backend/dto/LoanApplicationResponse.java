@@ -1,19 +1,19 @@
 package org.example.backend.dto;
 
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Data
-public class LoanApplicationResponse {
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String personalCode;
-    private Integer loanPeriodMonths;
-    private BigDecimal interestMargin;
-    private BigDecimal baseInterest;
-    private BigDecimal loanAmount;
-    private List<PaymentScheduleItemDTO> paymentScheduleItems;
-}
+@Schema(description = "Response object for loan applications with IN-REVIEW status, containing application details and payment schedule")
+public record LoanApplicationResponse(
+        Long id,
+        String firstName,
+        String lastName,
+        String personalCode,
+        Integer loanPeriodMonths,
+        BigDecimal interestMargin,
+        BigDecimal baseInterest,
+        BigDecimal loanAmount,
+        List<PaymentScheduleItemDTO> paymentScheduleItems
+) {}
