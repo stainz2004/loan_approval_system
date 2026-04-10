@@ -1,5 +1,6 @@
 package org.example.backend.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -28,6 +29,7 @@ public class LoanApplication {
     private BigDecimal baseInterest;
     private BigDecimal loanAmount;
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private LoanApplicationStatus loanApplicationStatus;
     @Enumerated(EnumType.STRING)
     private LoanRejectionReason rejectionReason;
