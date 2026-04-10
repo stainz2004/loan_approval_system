@@ -27,7 +27,7 @@ public class LoanApplicationController {
     private final LoanApplicationService loanApplicationService;
     private final LoanApplicationQueryService loanApplicationQueryService;
 
-    @Operation(summary = "Create loan application and get initial decision")
+    @Operation(summary = "Create a loan application")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Loan application created"),
             @ApiResponse(responseCode = "400", description = "Invalid request payload")

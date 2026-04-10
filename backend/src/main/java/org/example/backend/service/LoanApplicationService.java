@@ -9,6 +9,9 @@ import org.example.backend.dto.RegenerateScheduleRequest;
 import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
+import org.example.backend.exception.ActiveApplicationExistsException;
+import org.example.backend.exception.InvalidApplicationStateException;
+import org.example.backend.exception.LoanApplicationNotFoundException;
 import org.example.backend.mapper.LoanApplicationMapper;
 import org.example.backend.repository.LoanApplicationRepository;
 import org.example.backend.repository.PaymentScheduleRepository;
@@ -36,7 +39,7 @@ public class LoanApplicationService {
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
-            throw new IllegalStateException("Customer already has an active IN_REVIEW application.");
+            throw new ActiveApplicationExistsException("Customer already has an active IN_REVIEW application.");
         }
 
         loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
@@ -73,7 +76,7 @@ public class LoanApplicationService {
         LoanApplication application = getApplicationOrThrow(id);
 
         if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
-            throw new IllegalStateException("Only applications in IN_REVIEW status can be validated.");
+            throw new InvalidApplicationStateException("Only applications in IN_REVIEW status can be validated.");
         }
 
         loanApplicationMapper.updateFromRegenerateRequest(request, application);
@@ -121,7 +124,7 @@ public class LoanApplicationService {
      */
     private LoanApplication getApplicationOrThrow(Long id) {
         return loanApplicationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Loan application not found with id: " + id));
+                .orElseThrow(() -> new LoanApplicationNotFoundException(id));
     }
 
     /**
@@ -132,7 +135,7 @@ public class LoanApplicationService {
      */
     private void assertInReview(LoanApplication application, String action) {
         if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
-            throw new IllegalStateException(
+            throw new InvalidApplicationStateException(
                     "Cannot " + action + " application with status: "
                             + application.getLoanApplicationStatus()
                             + ". Only applications in IN_REVIEW status can be " + action + "."
