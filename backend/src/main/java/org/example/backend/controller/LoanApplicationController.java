@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
 import org.example.backend.dto.LoanRejectionReason;
-import org.example.backend.dto.ValidationDecision;
+import org.example.backend.dto.RegenerateScheduleRequest;
+import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.service.LoanApplicationQueryService;
 import org.example.backend.service.LoanApplicationService;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class LoanApplicationController {
             @ApiResponse(responseCode = "400", description = "Invalid request payload")
     })
     @PostMapping
-    public ResponseEntity<ValidationDecision> requestLoanDecision(
+    public ResponseEntity<LoanApplicationDecisionResponse> requestLoanDecision(
             @Valid @RequestBody LoanApplicationRequest loanApplicationRequest) {
         return ResponseEntity.status(201).body(loanApplicationService.createLoanApplication(loanApplicationRequest));
     }
@@ -70,6 +71,20 @@ public class LoanApplicationController {
             @PathVariable Long id,
             @RequestParam LoanRejectionReason reason) {
         loanApplicationService.rejectLoanApplication(id, reason);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/regenerate-schedule")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Payment schedule regenerated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "404", description = "Loan application not found"),
+            @ApiResponse(responseCode = "409", description = "Invalid application state")
+    })
+    public ResponseEntity<Void> regenerateSchedule(
+            @PathVariable Long id,
+            @Valid @RequestBody RegenerateScheduleRequest request) {
+        loanApplicationService.regenerateSchedule(id, request);
         return ResponseEntity.ok().build();
     }
 }

@@ -5,7 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationStatus;
 import org.example.backend.dto.LoanRejectionReason;
-import org.example.backend.dto.ValidationDecision;
+import org.example.backend.dto.RegenerateScheduleRequest;
+import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
 import org.example.backend.mapper.LoanApplicationMapper;
@@ -31,7 +32,7 @@ public class LoanApplicationService {
      * @param request The loan application request containing the necessary information to create a loan application.
      */
     @Transactional
-    public ValidationDecision createLoanApplication(LoanApplicationRequest request) {
+    public LoanApplicationDecisionResponse createLoanApplication(LoanApplicationRequest request) {
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
@@ -40,7 +41,7 @@ public class LoanApplicationService {
 
         loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
 
-        ValidationDecision decision = loanApplicationValidator.validateAge(request.personalCode());
+        LoanApplicationDecisionResponse decision = loanApplicationValidator.validateAge(request.personalCode());
 
         LoanApplication application = loanApplicationMapper.toEntity(request);
 
@@ -58,6 +59,30 @@ public class LoanApplicationService {
         paymentScheduleRepository.save(schedule);
 
         return decision;
+    }
+
+    /**
+     * Regenerates the payment schedule for a loan application with the given ID based on the provided request.
+     * This method validates that the application is in the IN_REVIEW status before allowing schedule regeneration.
+     *
+     * @param id The ID of the loan application for which to regenerate the payment schedule.
+     * @param request The request containing the necessary information to regenerate the payment schedule, such as new loan amount or period.
+     */
+    @Transactional
+    public void regenerateSchedule(Long id, RegenerateScheduleRequest request) {
+        LoanApplication application = getApplicationOrThrow(id);
+
+        if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
+            throw new IllegalStateException("Only applications in IN_REVIEW status can be validated.");
+        }
+
+        loanApplicationMapper.updateFromRegenerateRequest(request, application);
+
+        PaymentSchedule newSchedule = paymentScheduleGenerator.generateSchedule(application);
+        newSchedule.setLoanApplication(application);
+        application.setPaymentSchedule(newSchedule);
+
+        loanApplicationRepository.save(application);
     }
 
     /**

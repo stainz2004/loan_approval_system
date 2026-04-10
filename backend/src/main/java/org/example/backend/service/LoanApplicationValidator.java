@@ -3,7 +3,7 @@ package org.example.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.config.LoanProperties;
 import org.example.backend.dto.LoanRejectionReason;
-import org.example.backend.dto.ValidationDecision;
+import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.exception.InvalidPersonalCodeException;
 import org.springframework.stereotype.Component;
 
@@ -23,14 +23,14 @@ public class LoanApplicationValidator {
      * @param personalCode Customers personal code.
      * @return Validation decision based on the age of the customer. If the customer is too old, the decision will be rejected with the reason CUSTOMER_TOO_OLD. Otherwise, the decision will be accepted.
      */
-    public ValidationDecision validateAge(String personalCode) {
+    public LoanApplicationDecisionResponse validateAge(String personalCode) {
         int customersAge = calculateAge(parseBirthDate(personalCode));
 
         if (customersAge > loanProperties.maxAge()) {
-            return ValidationDecision.rejected(LoanRejectionReason.CUSTOMER_TOO_OLD);
+            return LoanApplicationDecisionResponse.rejected(LoanRejectionReason.CUSTOMER_TOO_OLD);
         }
 
-        return ValidationDecision.accepted();
+        return LoanApplicationDecisionResponse.accepted();
     }
 
     /**
