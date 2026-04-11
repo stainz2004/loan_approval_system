@@ -9,8 +9,6 @@ import org.example.backend.exception.InvalidPersonalCodeException;
 import org.example.backend.exception.LoanApplicationNotFoundException;
 import org.example.backend.mapper.LoanApplicationMapper;
 import org.example.backend.repository.LoanApplicationRepository;
-import org.example.backend.repository.PaymentScheduleItemRepository;
-import org.example.backend.repository.PaymentScheduleRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,12 +37,6 @@ class LoanApplicationQueryServiceTest {
     private LoanApplicationMapper loanApplicationMapper;
 
     @Mock
-    private PaymentScheduleRepository paymentScheduleRepository;
-
-    @Mock
-    private PaymentScheduleItemRepository paymentScheduleItemRepository;
-
-    @Mock
     private LoanApplicationValidator loanApplicationValidator;
 
     @InjectMocks
@@ -63,26 +55,17 @@ class LoanApplicationQueryServiceTest {
 
     @Test
     void getLoanApplications_returnsMappedResponses_forEachInReviewApplication() {
-        LoanApplication app1 = buildApplication(1L);
-        LoanApplication app2 = buildApplication(2L);
-
-        PaymentSchedule schedule1 = new PaymentSchedule();
-        PaymentSchedule schedule2 = new PaymentSchedule();
-
         PaymentScheduleItem item1 = new PaymentScheduleItem();
         PaymentScheduleItem item2 = new PaymentScheduleItem();
+
+        LoanApplication app1 = buildApplication(1L, List.of(item1));
+        LoanApplication app2 = buildApplication(2L, List.of(item2));
 
         LoanApplicationResponse response1 = mock(LoanApplicationResponse.class);
         LoanApplicationResponse response2 = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findByLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW))
                 .thenReturn(List.of(app1, app2));
-
-        when(paymentScheduleRepository.findByLoanApplication(app1)).thenReturn(Optional.of(schedule1));
-        when(paymentScheduleRepository.findByLoanApplication(app2)).thenReturn(Optional.of(schedule2));
-
-        when(paymentScheduleItemRepository.findByPaymentSchedule(schedule1)).thenReturn(List.of(item1));
-        when(paymentScheduleItemRepository.findByPaymentSchedule(schedule2)).thenReturn(List.of(item2));
 
         when(loanApplicationMapper.toResponse(app1, List.of(item1))).thenReturn(response1);
         when(loanApplicationMapper.toResponse(app2, List.of(item2))).thenReturn(response2);
@@ -94,12 +77,11 @@ class LoanApplicationQueryServiceTest {
 
     @Test
     void getLoanApplications_returnsEmptyScheduleItems_whenNoScheduleExistsForApplication() {
-        LoanApplication app = buildApplication(1L);
+        LoanApplication app = buildApplication(1L, null);
         LoanApplicationResponse response = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findByLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW))
                 .thenReturn(List.of(app));
-        when(paymentScheduleRepository.findByLoanApplication(app)).thenReturn(Optional.empty());
         when(loanApplicationMapper.toResponse(app, List.of())).thenReturn(response);
 
         List<LoanApplicationResponse> result = queryService.getLoanApplications();
@@ -120,20 +102,16 @@ class LoanApplicationQueryServiceTest {
 
     @Test
     void getLoanApplications_mapsAllScheduleItemsForApplication() {
-        LoanApplication app = buildApplication(1L);
-        PaymentSchedule schedule = new PaymentSchedule();
-
         PaymentScheduleItem item1 = new PaymentScheduleItem();
         PaymentScheduleItem item2 = new PaymentScheduleItem();
         PaymentScheduleItem item3 = new PaymentScheduleItem();
         List<PaymentScheduleItem> items = List.of(item1, item2, item3);
 
+        LoanApplication app = buildApplication(1L, items);
         LoanApplicationResponse response = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findByLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW))
                 .thenReturn(List.of(app));
-        when(paymentScheduleRepository.findByLoanApplication(app)).thenReturn(Optional.of(schedule));
-        when(paymentScheduleItemRepository.findByPaymentSchedule(schedule)).thenReturn(items);
         when(loanApplicationMapper.toResponse(app, items)).thenReturn(response);
 
         List<LoanApplicationResponse> result = queryService.getLoanApplications();
@@ -148,15 +126,12 @@ class LoanApplicationQueryServiceTest {
 
     @Test
     void getPaymentScheduleById_returnsResponse_whenApplicationFoundWithScheduleItems() {
-        LoanApplication app = buildApplication(1L);
-        PaymentSchedule schedule = new PaymentSchedule();
         PaymentScheduleItem item = new PaymentScheduleItem();
+        LoanApplication app = buildApplication(1L, List.of(item));
         LoanApplicationResponse expected = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findByIdAndLoanApplicationStatus(1L, LoanApplicationStatus.IN_REVIEW))
-                .thenReturn(app);
-        when(paymentScheduleRepository.findByLoanApplication(app)).thenReturn(Optional.of(schedule));
-        when(paymentScheduleItemRepository.findByPaymentSchedule(schedule)).thenReturn(List.of(item));
+                .thenReturn(Optional.of(app));
         when(loanApplicationMapper.toResponse(app, List.of(item))).thenReturn(expected);
 
         LoanApplicationResponse result = queryService.getPaymentScheduleById(1L);
@@ -166,12 +141,11 @@ class LoanApplicationQueryServiceTest {
 
     @Test
     void getPaymentScheduleById_returnsResponseWithEmptyItems_whenNoScheduleExists() {
-        LoanApplication app = buildApplication(1L);
+        LoanApplication app = buildApplication(1L, null);
         LoanApplicationResponse expected = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findByIdAndLoanApplicationStatus(1L, LoanApplicationStatus.IN_REVIEW))
-                .thenReturn(app);
-        when(paymentScheduleRepository.findByLoanApplication(app)).thenReturn(Optional.empty());
+                .thenReturn(Optional.of(app));
         when(loanApplicationMapper.toResponse(app, List.of())).thenReturn(expected);
 
         LoanApplicationResponse result = queryService.getPaymentScheduleById(1L);
@@ -183,21 +157,20 @@ class LoanApplicationQueryServiceTest {
     @Test
     void getPaymentScheduleById_throwsLoanApplicationNotFoundException_whenApplicationNotFound() {
         when(loanApplicationRepository.findByIdAndLoanApplicationStatus(99L, LoanApplicationStatus.IN_REVIEW))
-                .thenReturn(null);
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> queryService.getPaymentScheduleById(99L))
                 .isInstanceOf(LoanApplicationNotFoundException.class)
-                .hasMessageContaining("No loan application found for the provided personal code.");
+                .hasMessageContaining("No IN_REVIEW loan application found with ID: 99");
     }
 
     @Test
     void getPaymentScheduleById_queriesRepositoryWithCorrectIdAndInReviewStatus() {
-        LoanApplication app = buildApplication(5L);
+        LoanApplication app = buildApplication(5L, List.of());
         LoanApplicationResponse expected = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findByIdAndLoanApplicationStatus(5L, LoanApplicationStatus.IN_REVIEW))
-                .thenReturn(app);
-        when(paymentScheduleRepository.findByLoanApplication(app)).thenReturn(Optional.empty());
+                .thenReturn(Optional.of(app));
         when(loanApplicationMapper.toResponse(app, List.of())).thenReturn(expected);
 
         queryService.getPaymentScheduleById(5L);
@@ -212,21 +185,15 @@ class LoanApplicationQueryServiceTest {
     @Test
     void getApprovedLoanApplications_returnsMappedResponses_forApprovedApplications() {
         String personalCode = "38001085718";
-        LoanApplication app1 = buildApprovedApplication(10L, personalCode);
-        LoanApplication app2 = buildApprovedApplication(11L, personalCode);
-        PaymentSchedule schedule1 = new PaymentSchedule();
-        PaymentSchedule schedule2 = new PaymentSchedule();
         PaymentScheduleItem item1 = new PaymentScheduleItem();
         PaymentScheduleItem item2 = new PaymentScheduleItem();
+        LoanApplication app1 = buildApprovedApplication(10L, personalCode, List.of(item1));
+        LoanApplication app2 = buildApprovedApplication(11L, personalCode, List.of(item2));
         LoanApplicationResponse response1 = mock(LoanApplicationResponse.class);
         LoanApplicationResponse response2 = mock(LoanApplicationResponse.class);
 
         when(loanApplicationRepository.findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED))
                 .thenReturn(List.of(app1, app2));
-        when(paymentScheduleRepository.findByLoanApplication(app1)).thenReturn(Optional.of(schedule1));
-        when(paymentScheduleRepository.findByLoanApplication(app2)).thenReturn(Optional.of(schedule2));
-        when(paymentScheduleItemRepository.findByPaymentSchedule(schedule1)).thenReturn(List.of(item1));
-        when(paymentScheduleItemRepository.findByPaymentSchedule(schedule2)).thenReturn(List.of(item2));
         when(loanApplicationMapper.toResponse(app1, List.of(item1))).thenReturn(response1);
         when(loanApplicationMapper.toResponse(app2, List.of(item2))).thenReturn(response2);
 
@@ -267,9 +234,7 @@ class LoanApplicationQueryServiceTest {
         String personalCode = "38001085718";
 
         when(loanApplicationRepository.findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED))
-                .thenReturn(List.of(buildApprovedApplication(1L, personalCode)));
-        when(paymentScheduleRepository.findByLoanApplication(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(Optional.empty());
+                .thenReturn(List.of(buildApprovedApplication(1L, personalCode, List.of())));
         when(loanApplicationMapper.toResponse(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenReturn(mock(LoanApplicationResponse.class));
 
@@ -284,7 +249,7 @@ class LoanApplicationQueryServiceTest {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private LoanApplication buildApplication(Long id) {
+    private LoanApplication buildApplication(Long id, List<PaymentScheduleItem> items) {
         LoanApplication app = new LoanApplication();
         app.setId(id);
         app.setFirstName("John");
@@ -295,10 +260,17 @@ class LoanApplicationQueryServiceTest {
         app.setInterestMargin(new BigDecimal("2.0"));
         app.setBaseInterest(new BigDecimal("3.0"));
         app.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
+        if (items != null) {
+            PaymentSchedule schedule = new PaymentSchedule();
+            schedule.setLoanApplication(app);
+            items.forEach(item -> item.setPaymentSchedule(schedule));
+            schedule.setItems(new java.util.ArrayList<>(items));
+            app.setPaymentSchedule(schedule);
+        }
         return app;
     }
 
-    private LoanApplication buildApprovedApplication(Long id, String personalCode) {
+    private LoanApplication buildApprovedApplication(Long id, String personalCode, List<PaymentScheduleItem> items) {
         LoanApplication app = new LoanApplication();
         app.setId(id);
         app.setFirstName("Jane");
@@ -309,6 +281,13 @@ class LoanApplicationQueryServiceTest {
         app.setInterestMargin(new BigDecimal("1.5"));
         app.setBaseInterest(new BigDecimal("2.5"));
         app.setLoanApplicationStatus(LoanApplicationStatus.APPROVED);
+        if (items != null) {
+            PaymentSchedule schedule = new PaymentSchedule();
+            schedule.setLoanApplication(app);
+            items.forEach(item -> item.setPaymentSchedule(schedule));
+            schedule.setItems(new java.util.ArrayList<>(items));
+            app.setPaymentSchedule(schedule);
+        }
         return app;
     }
 }

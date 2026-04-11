@@ -8,9 +8,8 @@ import org.example.backend.entity.PaymentScheduleItem;
 import org.example.backend.exception.LoanApplicationNotFoundException;
 import org.example.backend.mapper.LoanApplicationMapper;
 import org.example.backend.repository.LoanApplicationRepository;
-import org.example.backend.repository.PaymentScheduleItemRepository;
-import org.example.backend.repository.PaymentScheduleRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,11 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LoanApplicationQueryService {
 
-
     private final LoanApplicationRepository loanApplicationRepository;
     private final LoanApplicationMapper loanApplicationMapper;
-    private final PaymentScheduleRepository paymentScheduleRepository;
-    private final PaymentScheduleItemRepository paymentScheduleItemRepository;
     private final LoanApplicationValidator loanApplicationValidator;
 
     /**
@@ -31,6 +27,7 @@ public class LoanApplicationQueryService {
      *
      * @return A list of LoanApplicationResponse objects representing the loan applications in review.
      */
+    @Transactional(readOnly = true)
     public List<LoanApplicationResponse> getLoanApplications() {
         List<LoanApplication> applications =
                 loanApplicationRepository.findByLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
@@ -41,23 +38,19 @@ public class LoanApplicationQueryService {
     }
 
     /**
-     * Retrieves the payment schedule for a loan application based on the provided personal code. This method first validates the personal code,
-     * then finds the loan application with the "IN_REVIEW" status associated with that personal code.
+     * Retrieves the payment schedule for a loan application with the given ID that is currently in IN_REVIEW status.
      *
      * @param id The ID of the loan application for which to retrieve the payment schedule.
      * @return A LoanApplicationResponse containing the details of the loan application and its associated payment schedule items.
      */
+    @Transactional(readOnly = true)
     public LoanApplicationResponse getPaymentScheduleById(Long id) {
+        LoanApplication application = loanApplicationRepository
+                .findByIdAndLoanApplicationStatus(id, LoanApplicationStatus.IN_REVIEW)
+                .orElseThrow(() -> new LoanApplicationNotFoundException(
+                        "No IN_REVIEW loan application found with ID: " + id));
 
-        LoanApplication application = loanApplicationRepository.findByIdAndLoanApplicationStatus(id, LoanApplicationStatus.IN_REVIEW);
-
-        if (application == null) {
-            throw new LoanApplicationNotFoundException("No loan application found for the provided personal code.");
-        }
-
-        List<PaymentScheduleItem> items = getPaymentScheduleItems(application);
-
-        return loanApplicationMapper.toResponse(application, items);
+        return loanApplicationMapper.toResponse(application, getPaymentScheduleItems(application));
     }
 
     /**
@@ -67,10 +60,12 @@ public class LoanApplicationQueryService {
      * @param personalCode The personal code of the customer for whom to retrieve the approved loan applications.
      * @return A list of LoanApplicationResponse objects representing the approved loan applications for the specified personal code.
      */
+    @Transactional(readOnly = true)
     public List<LoanApplicationResponse> getApprovedLoanApplications(String personalCode) {
         loanApplicationValidator.validateCustomerPersonalCode(personalCode);
 
-        List<LoanApplication> applications = loanApplicationRepository.findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED);
+        List<LoanApplication> applications = loanApplicationRepository
+                .findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED);
 
         if (applications.isEmpty()) {
             throw new LoanApplicationNotFoundException("No approved loan applications found for the provided personal code.");
@@ -89,20 +84,20 @@ public class LoanApplicationQueryService {
      * @return A LoanApplicationResponse DTO containing the application details and its payment schedule items.
      */
     private LoanApplicationResponse toLoanApplicationResponse(LoanApplication application) {
-        List<PaymentScheduleItem> items = getPaymentScheduleItems(application);
-        return loanApplicationMapper.toResponse(application, items);
+        return loanApplicationMapper.toResponse(application, getPaymentScheduleItems(application));
     }
 
     /**
-     * Retrieves the payment schedule items associated with a given loan application. This method first finds the payment schedule for the application
-     * and then retrieves the items linked to that schedule.
+     * Retrieves the payment schedule items associated with a given loan application directly via the entity relationship,
+     * avoiding extra repository queries.
      *
      * @param application The LoanApplication entity for which to retrieve the payment schedule items.
      * @return A list of PaymentScheduleItem entities associated with the loan application, or an empty list if no schedule is found.
      */
     private List<PaymentScheduleItem> getPaymentScheduleItems(LoanApplication application) {
-        return paymentScheduleRepository.findByLoanApplication(application)
-                .map(paymentScheduleItemRepository::findByPaymentSchedule)
-                .orElse(List.of());
+        if (application.getPaymentSchedule() == null) {
+            return List.of();
+        }
+        return application.getPaymentSchedule().getItems();
     }
 }

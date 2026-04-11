@@ -88,7 +88,7 @@ public class LoanApplicationService {
         LoanApplication application = getApplicationOrThrow(id);
 
         if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
-            throw new InvalidApplicationStateException("Only applications in IN_REVIEW status can be validated.");
+            throw new InvalidApplicationStateException("Only applications in IN_REVIEW status can be regenerated.");
         }
 
         loanApplicationMapper.updateFromRegenerateRequest(request, application);
@@ -96,10 +96,13 @@ public class LoanApplicationService {
         PaymentSchedule newSchedule = paymentScheduleGenerator.generateSchedule(application);
         PaymentSchedule existingSchedule = application.getPaymentSchedule();
 
-        existingSchedule.getItems().clear();
-        existingSchedule.getItems().addAll(newSchedule.getItems());
-        existingSchedule.getItems().forEach(item -> item.setPaymentSchedule(existingSchedule));
-
+        if (existingSchedule == null) {
+            paymentScheduleRepository.save(newSchedule);
+        } else {
+            existingSchedule.getItems().clear();
+            existingSchedule.getItems().addAll(newSchedule.getItems());
+            existingSchedule.getItems().forEach(item -> item.setPaymentSchedule(existingSchedule));
+        }
 
         loanApplicationRepository.save(application);
     }

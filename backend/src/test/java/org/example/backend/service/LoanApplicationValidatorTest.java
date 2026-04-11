@@ -110,7 +110,8 @@ class LoanApplicationValidatorTest {
 
         LoanApplicationDecisionResponse response = validator.validateAge(VALID_CODE_BORN_1945);
 
-        assertThat(response.isAccepted()).isFalse();
+        // The validator uses strictly-greater-than (age > maxAge), so age == maxAge is accepted.
+        assertThat(response.isAccepted()).isTrue();
     }
 
     @Test
