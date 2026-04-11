@@ -33,8 +33,7 @@ public class LoanApplicationValidator {
     }
 
     /**
-     * Simple personal code  validator. For the simplicity of the test work, I assume that every month has 31 days.
-     * Also for simplicity I assumed that we do not have people older than 120 among us anymore.
+     * Personal code validator. This method checks if the personal code is valid based on the personal code rules.
      *
      * @param personalCode Customers personal code.
      */
@@ -44,11 +43,12 @@ public class LoanApplicationValidator {
         }
 
         int firstDigit = Character.getNumericValue(personalCode.charAt(0));
-        if (firstDigit < 1 || firstDigit > 8) {
+        if (firstDigit < 1 || firstDigit > 6) {
             throw new InvalidPersonalCodeException("Invalid personal code!");
         }
 
         LocalDate today = LocalDate.now();
+        // For simplicity, I did some research and found that the oldest human being right now is 116 years old, so I assume that there are not people older than 120.
         LocalDate minAllowedBirthDate = today.minusYears(120);
 
         LocalDate birthDate = parseBirthDate(personalCode);
@@ -82,7 +82,7 @@ public class LoanApplicationValidator {
             else throw new InvalidPersonalCodeException("Invalid personal code!");
 
             return LocalDate.of(century + yy, mm, dd);
-        } catch (IndexOutOfBoundsException | NumberFormatException | DateTimeException e) {
+        } catch (DateTimeException e) {
             throw new InvalidPersonalCodeException("Invalid personal code!");
         }
     }
@@ -107,6 +107,8 @@ public class LoanApplicationValidator {
         int[] weights1 = {1,2,3,4,5,6,7,8,9,1};
         int[] weights2 = {3,4,5,6,7,8,9,1,2,3};
 
+        // Every personal code number is times by the corresponding weight and it is all summed up.
+        // The sum is divided by 11 and the remainder is the control number for the last digit.
         int sum = 0;
         for (int i = 0; i < 10; i++) {
             sum += Character.getNumericValue(personalCode.charAt(i)) * weights1[i];

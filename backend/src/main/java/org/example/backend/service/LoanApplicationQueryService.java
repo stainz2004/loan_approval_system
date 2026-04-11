@@ -44,13 +44,12 @@ public class LoanApplicationQueryService {
      * Retrieves the payment schedule for a loan application based on the provided personal code. This method first validates the personal code,
      * then finds the loan application with the "IN_REVIEW" status associated with that personal code.
      *
-     * @param personalCode The personal code of the customer for whom to retrieve the loan application and its payment schedule.
+     * @param id The ID of the loan application for which to retrieve the payment schedule.
      * @return A LoanApplicationResponse containing the details of the loan application and its associated payment schedule items.
      */
-    public LoanApplicationResponse getPaymentScheduleByPersonalCode(String personalCode) {
-        loanApplicationValidator.validateCustomerPersonalCode(personalCode);
+    public LoanApplicationResponse getPaymentScheduleById(Long id) {
 
-        LoanApplication application = loanApplicationRepository.findByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.IN_REVIEW);
+        LoanApplication application = loanApplicationRepository.findByIdAndLoanApplicationStatus(id, LoanApplicationStatus.IN_REVIEW);
 
         if (application == null) {
             throw new LoanApplicationNotFoundException("No loan application found for the provided personal code.");

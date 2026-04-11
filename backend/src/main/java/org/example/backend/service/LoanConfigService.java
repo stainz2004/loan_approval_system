@@ -31,6 +31,7 @@ public class LoanConfigService {
         return loanConfigRepository.findById(MAX_AGE_KEY)
                 .map(config -> {
                     try {
+                        // Try to get the max age from the database.
                         return Integer.parseInt(config.getValue());
                     } catch (NumberFormatException e) {
                         log.warn("Invalid '{}' config value '{}', falling back to default", MAX_AGE_KEY, config.getValue());
@@ -50,11 +51,12 @@ public class LoanConfigService {
         return loanConfigRepository.findById(BASE_INTEREST_KEY)
                 .map(config -> {
                     try {
+                        // Try to get the base interest rate from the database.
                         return new BigDecimal(config.getValue());
                     } catch (NumberFormatException e) {
                         log.warn("Invalid '{}' config value '{}', falling back to default",
                                 BASE_INTEREST_KEY, config.getValue());
-                        return loanProperties.baseInterest(); // fallback in application.properties
+                        return loanProperties.baseInterest();
                     }
                 })
                 .orElse(loanProperties.baseInterest());

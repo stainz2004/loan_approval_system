@@ -2,6 +2,7 @@ package org.example.backend.mapper;
 
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
+import org.example.backend.dto.PaymentScheduleItemDTO;
 import org.example.backend.dto.RegenerateScheduleRequest;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentScheduleItem;
@@ -23,6 +24,8 @@ public interface LoanApplicationMapper {
     LoanApplication toEntity(LoanApplicationRequest request);
 
     LoanApplicationResponse toResponse(LoanApplication application, List<PaymentScheduleItem> paymentScheduleItems);
+
+    List<PaymentScheduleItemDTO> toPaymentScheduleItems(List<PaymentScheduleItem> items);
 
     @BeanMapping(
             ignoreByDefault = true,

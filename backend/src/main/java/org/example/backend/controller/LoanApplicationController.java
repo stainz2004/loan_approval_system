@@ -6,11 +6,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.dto.LoanApplicationCreationResponse;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
 import org.example.backend.dto.LoanRejectionReason;
 import org.example.backend.dto.RegenerateScheduleRequest;
-import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.service.LoanApplicationQueryService;
 import org.example.backend.service.LoanApplicationService;
 import org.springframework.http.ResponseEntity;
@@ -27,16 +27,18 @@ public class LoanApplicationController {
     private final LoanApplicationService loanApplicationService;
     private final LoanApplicationQueryService loanApplicationQueryService;
 
+
     @Operation(summary = "Create a loan application")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Loan application created"),
             @ApiResponse(responseCode = "400", description = "Invalid request payload")
     })
     @PostMapping
-    public ResponseEntity<LoanApplicationDecisionResponse> requestLoanDecision(
+    public ResponseEntity<LoanApplicationCreationResponse> requestLoanDecision(
             @Valid @RequestBody LoanApplicationRequest loanApplicationRequest) {
         return ResponseEntity.status(201).body(loanApplicationService.createLoanApplication(loanApplicationRequest));
     }
+
 
     @Operation(summary = "Get loan applications in review")
     @ApiResponses({
@@ -46,6 +48,7 @@ public class LoanApplicationController {
     public ResponseEntity<List<LoanApplicationResponse>> getLoanApplications() {
         return ResponseEntity.ok(loanApplicationQueryService.getLoanApplications());
     }
+
 
     @Operation(summary = "Approve a loan application")
     @ApiResponses({
@@ -58,6 +61,7 @@ public class LoanApplicationController {
         loanApplicationService.approveLoanApplication(id);
         return ResponseEntity.ok().build();
     }
+
 
     @Operation(summary = "Reject a loan application")
     @ApiResponses({
@@ -72,6 +76,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok().build();
     }
 
+
     @Operation(summary = "Regenerate the payment schedule based on new inputs")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Payment schedule regenerated"),
@@ -85,16 +90,17 @@ public class LoanApplicationController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Get in-review payment schedule by personal code")
+
+    @Operation(summary = "Get in-review payment schedule by id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Payment schedule fetched"),
-            @ApiResponse(responseCode = "400", description = "Invalid personal code"),
             @ApiResponse(responseCode = "404", description = "Loan application not found")
     })
-    @GetMapping("/payment-schedule")
-    public ResponseEntity<LoanApplicationResponse> getPaymentScheduleByPersonalCode(@RequestParam String personalCode) {
-        return ResponseEntity.ok(loanApplicationQueryService.getPaymentScheduleByPersonalCode(personalCode));
+    @GetMapping("/{id}/payment-schedule")
+    public ResponseEntity<LoanApplicationResponse> getPaymentScheduleById(@PathVariable Long id) {
+        return ResponseEntity.ok(loanApplicationQueryService.getPaymentScheduleById(id));
     }
+
 
     @Operation(summary = "Get all approved loan applications by personal code")
     @ApiResponses({

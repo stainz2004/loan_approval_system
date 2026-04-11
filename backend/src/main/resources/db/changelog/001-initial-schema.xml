@@ -80,4 +80,12 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="11.04.2026-13:23-add-indexes" author="Sander R">
+        <createIndex indexName="idx_payment_schedule_item_schedule_id"
+                     tableName="payment_schedule_item">
+            <column name="payment_schedule_id"/>
+        </createIndex>
+
+    </changeSet>
+
 </databaseChangeLog>

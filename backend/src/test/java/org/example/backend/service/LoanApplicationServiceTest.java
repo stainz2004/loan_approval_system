@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.LoanApplicationCreationResponse;
 import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationStatus;
@@ -88,7 +89,7 @@ class LoanApplicationServiceTest {
         when(loanApplicationValidator.validateAge("38001085718"))
                 .thenReturn(LoanApplicationDecisionResponse.rejected(LoanRejectionReason.CUSTOMER_TOO_OLD));
 
-        LoanApplicationDecisionResponse response = loanApplicationService.createLoanApplication(validRequest);
+        LoanApplicationCreationResponse response = loanApplicationService.createLoanApplication(validRequest);
 
         assertThat(response.isAccepted()).isFalse();
         assertThat(response.rejectionReason()).isEqualTo(LoanRejectionReason.CUSTOMER_TOO_OLD);
@@ -111,7 +112,7 @@ class LoanApplicationServiceTest {
                 .thenReturn(LoanApplicationDecisionResponse.accepted());
         when(paymentScheduleGenerator.generateSchedule(mappedApplication)).thenReturn(generatedSchedule);
 
-        LoanApplicationDecisionResponse response = loanApplicationService.createLoanApplication(validRequest);
+        LoanApplicationCreationResponse response = loanApplicationService.createLoanApplication(validRequest);
 
         assertThat(response.isAccepted()).isTrue();
 

@@ -1,5 +1,7 @@
 package org.example.backend.service;
 
+import org.example.backend.dto.LoanApplicationCreationResponse;
+import org.example.backend.dto.PaymentScheduleItemDTO;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
@@ -17,6 +19,7 @@ import org.example.backend.repository.LoanApplicationRepository;
 import org.example.backend.repository.PaymentScheduleRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 
 
 @Service
@@ -35,7 +38,7 @@ public class LoanApplicationService {
      * @param request The loan application request containing the necessary information to create a loan application.
      */
     @Transactional
-    public LoanApplicationDecisionResponse createLoanApplication(LoanApplicationRequest request) {
+    public LoanApplicationCreationResponse createLoanApplication(LoanApplicationRequest request) {
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
@@ -52,16 +55,15 @@ public class LoanApplicationService {
             application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);
             application.setRejectionReason(decision.rejectionReason());
             loanApplicationRepository.save(application);
-            return decision;
+            return LoanApplicationCreationResponse.rejected(decision.rejectionReason());
         }
 
         application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
         loanApplicationRepository.save(application);
-
         PaymentSchedule schedule = paymentScheduleGenerator.generateSchedule(application);
         paymentScheduleRepository.save(schedule);
-
-        return decision;
+        List<PaymentScheduleItemDTO> items = loanApplicationMapper.toPaymentScheduleItems(schedule.getItems());
+        return LoanApplicationCreationResponse.accepted(items);
     }
 
     /**
