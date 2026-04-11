@@ -10,11 +10,6 @@ export interface LoanApplicationRequest {
   loanAmount: number;
 }
 
-export interface LoanApplicationDecisionResponse {
-  isAccepted: boolean;
-  rejectionReason?: LoanRejectionReason;
-}
-
 export interface PaymentScheduleItemDTO {
   id: number;
   paymentNumber: number;
@@ -23,7 +18,11 @@ export interface PaymentScheduleItemDTO {
   remainingBalance: number;
 }
 
-export type LoanApplicationStatus = 'IN_REVIEW' | 'APPROVED' | 'REJECTED';
+export interface LoanApplicationCreationResponse {
+  isAccepted: boolean;
+  rejectionReason?: LoanRejectionReason;
+  paymentScheduleItems?: PaymentScheduleItemDTO[];
+}
 
 export interface LoanApplicationResponse {
   id: number;
@@ -34,7 +33,6 @@ export interface LoanApplicationResponse {
   interestMargin: number;
   baseInterest: number;
   loanAmount: number;
-  status: LoanApplicationStatus;
   paymentScheduleItems: PaymentScheduleItemDTO[];
 }
 

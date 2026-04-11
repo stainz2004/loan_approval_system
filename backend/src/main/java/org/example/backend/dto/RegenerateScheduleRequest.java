@@ -7,8 +7,12 @@ import jakarta.validation.constraints.Min;
 
 import java.math.BigDecimal;
 
+/**
+ * Request payload for regenerating a loan payment schedule with updated parameters.
+ */
 @Schema(name = "RegenerateScheduleRequest", description = "Payload for regenerating a loan payment schedule based on updated loan parameters")
 public record RegenerateScheduleRequest(
+
         @DecimalMin("5000")
         BigDecimal loanAmount,
 

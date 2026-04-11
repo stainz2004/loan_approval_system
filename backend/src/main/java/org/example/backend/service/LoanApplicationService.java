@@ -4,6 +4,7 @@ import org.example.backend.dto.LoanApplicationCreationResponse;
 import org.example.backend.dto.PaymentScheduleItemDTO;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationStatus;
 import org.example.backend.dto.LoanRejectionReason;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LoanApplicationService {
@@ -39,27 +41,34 @@ public class LoanApplicationService {
      */
     @Transactional
     public LoanApplicationCreationResponse createLoanApplication(LoanApplicationRequest request) {
+        log.info("Creating loan application for personal code ending in ...{}", request.personalCode().substring(request.personalCode().length() - 4));
+
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
             throw new ActiveApplicationExistsException("Customer already has an active IN_REVIEW application.");
         }
 
+        // First validate to even check if the personal code is valid before saving it to the database.
         loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
 
         LoanApplicationDecisionResponse decision = loanApplicationValidator.validateAge(request.personalCode());
 
         LoanApplication application = loanApplicationMapper.toEntity(request);
 
+        // If the decision is negative then save the application with REJECTED status and return the rejection reason.
         if (!decision.isAccepted()) {
             application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);
             application.setRejectionReason(decision.rejectionReason());
             loanApplicationRepository.save(application);
+            log.info("Loan application id={} rejected at creation. Reason: {}", application.getId(), decision.rejectionReason());
             return LoanApplicationCreationResponse.rejected(decision.rejectionReason());
         }
 
+        // Passed all checks - save the application with IN_REVIEW status, generate the payment schedule and return the schedule items in the response.
         application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
         loanApplicationRepository.save(application);
+        log.info("Loan application id={} created with IN_REVIEW status", application.getId());
         PaymentSchedule schedule = paymentScheduleGenerator.generateSchedule(application);
         paymentScheduleRepository.save(schedule);
         List<PaymentScheduleItemDTO> items = loanApplicationMapper.toPaymentScheduleItems(schedule.getItems());
@@ -75,6 +84,7 @@ public class LoanApplicationService {
      */
     @Transactional
     public void regenerateSchedule(Long id, RegenerateScheduleRequest request) {
+        log.info("Regenerating payment schedule for application id={}", id);
         LoanApplication application = getApplicationOrThrow(id);
 
         if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
@@ -84,8 +94,12 @@ public class LoanApplicationService {
         loanApplicationMapper.updateFromRegenerateRequest(request, application);
 
         PaymentSchedule newSchedule = paymentScheduleGenerator.generateSchedule(application);
-        newSchedule.setLoanApplication(application);
-        application.setPaymentSchedule(newSchedule);
+        PaymentSchedule existingSchedule = application.getPaymentSchedule();
+
+        existingSchedule.getItems().clear();
+        existingSchedule.getItems().addAll(newSchedule.getItems());
+        existingSchedule.getItems().forEach(item -> item.setPaymentSchedule(existingSchedule));
+
 
         loanApplicationRepository.save(application);
     }
@@ -97,10 +111,12 @@ public class LoanApplicationService {
      */
     @Transactional
     public void approveLoanApplication(Long id) {
+        log.info("Approving loan application id={}", id);
         LoanApplication application = getApplicationOrThrow(id);
         assertInReview(application, "approve");
         application.setLoanApplicationStatus(LoanApplicationStatus.APPROVED);
         loanApplicationRepository.save(application);
+        log.info("Loan application id={} approved", id);
     }
 
     /**
@@ -111,11 +127,13 @@ public class LoanApplicationService {
      */
     @Transactional
     public void rejectLoanApplication(Long id, LoanRejectionReason reason) {
+        log.info("Rejecting loan application id={} with reason: {}", id, reason);
         LoanApplication application = getApplicationOrThrow(id);
         assertInReview(application, "reject");
         application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);
         application.setRejectionReason(reason);
         loanApplicationRepository.save(application);
+        log.info("Loan application id={} rejected", id);
     }
 
     /**

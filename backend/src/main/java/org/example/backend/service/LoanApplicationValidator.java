@@ -1,6 +1,7 @@
 package org.example.backend.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.backend.dto.LoanRejectionReason;
 import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.exception.InvalidPersonalCodeException;
@@ -10,6 +11,7 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.Period;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LoanApplicationValidator {
@@ -24,8 +26,12 @@ public class LoanApplicationValidator {
      */
     public LoanApplicationDecisionResponse validateAge(String personalCode) {
         int customersAge = calculateAge(parseBirthDate(personalCode));
+        int maxAge = loanConfigService.getMaxAge();
 
-        if (customersAge > loanConfigService.getMaxAge()) {
+        log.debug("Age validation: customerAge={}, maxAge={}", customersAge, maxAge);
+
+        if (customersAge > maxAge) {
+            log.debug("Age validation failed: customer is too old (age={})", customersAge);
             return LoanApplicationDecisionResponse.rejected(LoanRejectionReason.CUSTOMER_TOO_OLD);
         }
 

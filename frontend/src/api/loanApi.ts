@@ -1,6 +1,6 @@
 import { apiFetch } from './http';
 import type {
-  LoanApplicationDecisionResponse,
+  LoanApplicationCreationResponse,
   LoanApplicationRequest,
   LoanApplicationResponse,
   LoanRejectionReason,
@@ -11,7 +11,7 @@ export const getLoanApplications = () =>
   apiFetch<LoanApplicationResponse[]>('/api/loan-applications', { method: 'GET' });
 
 export const requestLoanDecision = (payload: LoanApplicationRequest) =>
-  apiFetch<LoanApplicationDecisionResponse>('/api/loan-applications', { method: 'POST', body: JSON.stringify(payload) });
+  apiFetch<LoanApplicationCreationResponse>('/api/loan-applications', { method: 'POST', body: JSON.stringify(payload) });
 
 export const approveLoanApplication = (id: number) =>
   apiFetch(`/api/loan-applications/${id}/approve`, { method: 'POST' });
