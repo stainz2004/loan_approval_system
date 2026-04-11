@@ -17,8 +17,8 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface LoanApplicationMapper {
 
-    @Mapping(target = "loanApplicationStatus", constant = "STARTED")
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "loanApplicationStatus", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "paymentSchedule", ignore = true)
     LoanApplication toEntity(LoanApplicationRequest request);

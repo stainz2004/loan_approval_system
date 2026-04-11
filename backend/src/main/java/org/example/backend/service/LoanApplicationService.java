@@ -41,8 +41,6 @@ public class LoanApplicationService {
      */
     @Transactional
     public LoanApplicationCreationResponse createLoanApplication(LoanApplicationRequest request) {
-        log.info("Creating loan application for personal code ending in ...{}", request.personalCode().substring(request.personalCode().length() - 4));
-
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
@@ -98,10 +96,11 @@ public class LoanApplicationService {
 
         if (existingSchedule == null) {
             paymentScheduleRepository.save(newSchedule);
+            application.setPaymentSchedule(newSchedule);
         } else {
             existingSchedule.getItems().clear();
+            newSchedule.getItems().forEach(item -> item.setPaymentSchedule(existingSchedule));
             existingSchedule.getItems().addAll(newSchedule.getItems());
-            existingSchedule.getItems().forEach(item -> item.setPaymentSchedule(existingSchedule));
         }
 
         loanApplicationRepository.save(application);

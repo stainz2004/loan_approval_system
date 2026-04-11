@@ -112,7 +112,7 @@ export function NewApplicationView() {
               type="number"
               value={form.interestMargin}
               onChange={(e) => set('interestMargin', Number(e.target.value))}
-              min={0}
+              min={0.1}
               step="0.01"
               required
             />
@@ -124,7 +124,7 @@ export function NewApplicationView() {
               type="number"
               value={form.baseInterest}
               onChange={(e) => set('baseInterest', Number(e.target.value))}
-              min={0}
+              min={0.1}
               step="0.01"
               required
             />
