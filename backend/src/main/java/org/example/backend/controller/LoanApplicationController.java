@@ -67,24 +67,43 @@ public class LoanApplicationController {
             @ApiResponse(responseCode = "409", description = "Invalid application state")
     })
     @PostMapping("/{id}/reject")
-    public ResponseEntity<Void> rejectLoanApplication(
-            @PathVariable Long id,
-            @RequestParam LoanRejectionReason reason) {
+    public ResponseEntity<Void> rejectLoanApplication(@PathVariable Long id, @RequestParam LoanRejectionReason reason) {
         loanApplicationService.rejectLoanApplication(id, reason);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{id}/regenerate-schedule")
+    @Operation(summary = "Regenerate the payment schedule based on new inputs")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Payment schedule regenerated"),
             @ApiResponse(responseCode = "400", description = "Invalid request payload"),
             @ApiResponse(responseCode = "404", description = "Loan application not found"),
             @ApiResponse(responseCode = "409", description = "Invalid application state")
     })
-    public ResponseEntity<Void> regenerateSchedule(
-            @PathVariable Long id,
-            @Valid @RequestBody RegenerateScheduleRequest request) {
+    @PostMapping("/{id}/regenerate-schedule")
+    public ResponseEntity<Void> regenerateSchedule(@PathVariable Long id, @Valid @RequestBody RegenerateScheduleRequest request) {
         loanApplicationService.regenerateSchedule(id, request);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Get in-review payment schedule by personal code")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Payment schedule fetched"),
+            @ApiResponse(responseCode = "400", description = "Invalid personal code"),
+            @ApiResponse(responseCode = "404", description = "Loan application not found")
+    })
+    @GetMapping("/payment-schedule")
+    public ResponseEntity<LoanApplicationResponse> getPaymentScheduleByPersonalCode(@RequestParam String personalCode) {
+        return ResponseEntity.ok(loanApplicationQueryService.getPaymentScheduleByPersonalCode(personalCode));
+    }
+
+    @Operation(summary = "Get all approved loan applications by personal code")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Loan applications fetched"),
+            @ApiResponse(responseCode = "400", description = "Invalid personal code"),
+            @ApiResponse(responseCode = "404", description = "Loan application not found")
+    })
+    @GetMapping("/approved")
+    public ResponseEntity<List<LoanApplicationResponse>> getApprovedLoanApplications(@RequestParam String personalCode) {
+        return ResponseEntity.ok(loanApplicationQueryService.getApprovedLoanApplications(personalCode));
     }
 }

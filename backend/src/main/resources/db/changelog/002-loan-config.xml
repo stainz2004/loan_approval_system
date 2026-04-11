@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="10.04.2026-20:32-loan-config-table" author="Sander R">
+        <createTable tableName="loan_config">
+            <column name="config_key" type="varchar(50)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="value" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="10.04.2026-20:36-loan-config-seed-age" author="Sander R">
+        <insert tableName="loan_config">
+            <column name="config_key" value="max_age"/>
+            <column name="value" value="70"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="10.04.2026-loan-config-base-interest" author="Sander R">
+        <insert tableName="loan_config">
+            <column name="config_key" value="base_interest"/>
+            <column name="value" value="1.1"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

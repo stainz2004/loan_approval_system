@@ -11,6 +11,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface LoanApplicationMapper {
 
@@ -20,7 +22,7 @@ public interface LoanApplicationMapper {
     @Mapping(target = "paymentSchedule", ignore = true)
     LoanApplication toEntity(LoanApplicationRequest request);
 
-    LoanApplicationResponse toResponse(LoanApplication application, java.util.List<PaymentScheduleItem> paymentScheduleItems);
+    LoanApplicationResponse toResponse(LoanApplication application, List<PaymentScheduleItem> paymentScheduleItems);
 
     @BeanMapping(
             ignoreByDefault = true,

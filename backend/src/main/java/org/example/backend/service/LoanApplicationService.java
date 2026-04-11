@@ -1,6 +1,6 @@
 package org.example.backend.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationStatus;
@@ -124,7 +124,7 @@ public class LoanApplicationService {
      */
     private LoanApplication getApplicationOrThrow(Long id) {
         return loanApplicationRepository.findById(id)
-                .orElseThrow(() -> new LoanApplicationNotFoundException(id));
+                .orElseThrow(() -> new LoanApplicationNotFoundException("Loan application with ID " + id + " not found."));
     }
 
     /**
