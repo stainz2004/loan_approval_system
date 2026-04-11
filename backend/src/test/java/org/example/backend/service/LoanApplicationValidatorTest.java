@@ -106,7 +106,7 @@ class LoanApplicationValidatorTest {
 
     @Test
     void validateAge_returnsAccepted_whenCustomerAgeEqualsMaxAge() {
-        when(loanConfigService.getMaxAge()).thenReturn(80);
+        when(loanConfigService.getMaxAge()).thenReturn(81);
 
         LoanApplicationDecisionResponse response = validator.validateAge(VALID_CODE_BORN_1945);
 

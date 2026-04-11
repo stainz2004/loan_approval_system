@@ -95,8 +95,9 @@ public class LoanApplicationService {
         PaymentSchedule existingSchedule = application.getPaymentSchedule();
 
         if (existingSchedule == null) {
-            paymentScheduleRepository.save(newSchedule);
+            newSchedule.setLoanApplication(application);
             application.setPaymentSchedule(newSchedule);
+            paymentScheduleRepository.save(newSchedule);
         } else {
             existingSchedule.getItems().clear();
             newSchedule.getItems().forEach(item -> item.setPaymentSchedule(existingSchedule));
