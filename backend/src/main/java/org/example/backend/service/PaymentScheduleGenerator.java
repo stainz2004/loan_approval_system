@@ -27,7 +27,7 @@ public class PaymentScheduleGenerator {
     // Money values are rounded to cents
     private static final int CURRENCY_DECIMAL_PLACES = 2;
     private static final int RATE_DECIMAL_PLACES = 10;
-    private static final BigDecimal ONE_THOUSAND_TWO_HUNDRED = BigDecimal.valueOf(1200);
+    private static final BigDecimal ANNUAL_TO_MONTHLY_DIVISOR = BigDecimal.valueOf(1200);
 
     // Use the LoanConfigService to get the base interest rate for schedule generation
     private final LoanConfigService loanConfigService;
@@ -126,6 +126,6 @@ public class PaymentScheduleGenerator {
     private BigDecimal calculateMonthlyInterestRate(BigDecimal interestMargin, BigDecimal baseInterest) {
         return interestMargin
                 .add(baseInterest)
-                .divide(ONE_THOUSAND_TWO_HUNDRED, 10, RoundingMode.HALF_UP);
+                .divide(ANNUAL_TO_MONTHLY_DIVISOR, 10, RoundingMode.HALF_UP);
     }
 }
