@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import lombok.RequiredArgsConstructor;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
 import org.example.backend.entity.PaymentScheduleItem;
@@ -20,12 +21,16 @@ import java.util.List;
  * caused by rounding throughout the schedule.
  */
 @Service
+@RequiredArgsConstructor
 public class PaymentScheduleGenerator {
 
     // Money values are rounded to cents
     private static final int CURRENCY_DECIMAL_PLACES = 2;
     private static final int RATE_DECIMAL_PLACES = 10;
     private static final BigDecimal ONE_THOUSAND_TWO_HUNDRED = BigDecimal.valueOf(1200);
+
+    // Use the LoanConfigService to get the base interest rate for schedule generation
+    private final LoanConfigService loanConfigService;
 
     /**
      * Generates a payment schedule for a given loan application.
@@ -44,7 +49,7 @@ public class PaymentScheduleGenerator {
 
         // Monthly interest rate.
         BigDecimal monthlyRate = calculateMonthlyInterestRate(
-                loanApplication.getInterestMargin(), loanApplication.getBaseInterest());
+                loanApplication.getInterestMargin(), loanConfigService.getBaseInterest());
 
 
         BigDecimal fixedMonthlyPayment = calculateMonthlyPayment(
