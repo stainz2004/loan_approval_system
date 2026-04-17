@@ -5,29 +5,38 @@ import org.example.backend.entity.PaymentSchedule;
 import org.example.backend.entity.PaymentScheduleItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class PaymentScheduleGeneratorTest {
+
+    @Mock
+    private LoanConfigService loanConfigService;
 
     private PaymentScheduleGenerator generator;
 
+    private static final BigDecimal DEFAULT_BASE_INTEREST = new BigDecimal("3.0");
+
     @BeforeEach
     void setUp() {
-        generator = new PaymentScheduleGenerator();
+        generator = new PaymentScheduleGenerator(loanConfigService);
     }
 
     private LoanApplication buildApplication(BigDecimal loanAmount, int periodMonths,
-                                              BigDecimal interestMargin, BigDecimal baseInterest) {
+                                              BigDecimal interestMargin) {
         LoanApplication app = new LoanApplication();
         app.setLoanAmount(loanAmount);
         app.setLoanPeriodMonths(periodMonths);
         app.setInterestMargin(interestMargin);
-        app.setBaseInterest(baseInterest);
         return app;
     }
 
@@ -35,7 +44,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_returnsScheduleLinkedToApplication() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
 
@@ -48,7 +58,8 @@ class PaymentScheduleGeneratorTest {
         int months = 24;
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), months,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
 
@@ -60,7 +71,8 @@ class PaymentScheduleGeneratorTest {
         int months = 6;
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), months,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
         List<PaymentScheduleItem> items = schedule.getItems();
@@ -74,7 +86,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_firstItemDueDateIsToday() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
 
@@ -86,7 +99,8 @@ class PaymentScheduleGeneratorTest {
         int months = 6;
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), months,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
         List<PaymentScheduleItem> items = schedule.getItems();
@@ -101,7 +115,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_lastItemRemainingBalanceIsZero() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
         PaymentScheduleItem lastItem = schedule.getItems().get(11);
@@ -113,7 +128,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_allItemsHavePositiveTotalAmount() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
 
@@ -125,7 +141,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_allItemsHaveNonNegativeRemainingBalance() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
 
@@ -137,7 +154,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_allItemsHaveTotalAmountScaledToTwoDecimalPlaces() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
 
@@ -147,11 +165,11 @@ class PaymentScheduleGeneratorTest {
 
     @Test
     void generateSchedule_withVeryLowInterest_lastItemBalanceIsZero() {
-        // Using a very small but non-zero interest to avoid division-by-zero in the annuity formula
         BigDecimal loanAmount = new BigDecimal("12000");
         int months = 12;
         LoanApplication app = buildApplication(loanAmount, months,
-                new BigDecimal("0.01"), new BigDecimal("0.01"));
+                new BigDecimal("0.01"));
+        when(loanConfigService.getBaseInterest()).thenReturn(new BigDecimal("0.01"));
 
         PaymentSchedule schedule = generator.generateSchedule(app);
         List<PaymentScheduleItem> items = schedule.getItems();
@@ -165,7 +183,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_remainingBalanceDecreasesMonthToMonth() {
         LoanApplication app = buildApplication(
                 new BigDecimal("10000"), 12,
-                new BigDecimal("2.0"), new BigDecimal("3.0"));
+                new BigDecimal("2.0"));
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
         List<PaymentScheduleItem> items = schedule.getItems();
@@ -180,8 +199,8 @@ class PaymentScheduleGeneratorTest {
     void generateSchedule_singleMonthLoan_totalAmountEqualsLoanAmountPlusInterest() {
         BigDecimal loanAmount = new BigDecimal("10000");
         BigDecimal interestMargin = new BigDecimal("2.0");
-        BigDecimal baseInterest = new BigDecimal("3.0");
-        LoanApplication app = buildApplication(loanAmount, 1, interestMargin, baseInterest);
+        LoanApplication app = buildApplication(loanAmount, 1, interestMargin);
+        when(loanConfigService.getBaseInterest()).thenReturn(DEFAULT_BASE_INTEREST);
 
         PaymentSchedule schedule = generator.generateSchedule(app);
         PaymentScheduleItem item = schedule.getItems().get(0);

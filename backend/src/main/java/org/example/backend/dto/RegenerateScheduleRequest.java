@@ -16,10 +16,10 @@ public record RegenerateScheduleRequest(
         @DecimalMin("5000")
         BigDecimal loanAmount,
 
-        @DecimalMin("0")
+        @DecimalMin("0.1")
         BigDecimal interestMargin,
 
-        @DecimalMin("0")
+        @DecimalMin("0.1")
         BigDecimal baseInterest,
 
         @Min(6) @Max(360)

@@ -120,10 +120,6 @@ class LoanApplicationQueryServiceTest {
         verify(loanApplicationMapper).toResponse(app, items);
     }
 
-    // -------------------------------------------------------------------------
-    // getPaymentScheduleById
-    // -------------------------------------------------------------------------
-
     @Test
     void getPaymentScheduleById_returnsResponse_whenApplicationFoundWithScheduleItems() {
         PaymentScheduleItem item = new PaymentScheduleItem();
@@ -177,10 +173,6 @@ class LoanApplicationQueryServiceTest {
 
         verify(loanApplicationRepository).findByIdAndLoanApplicationStatus(5L, LoanApplicationStatus.IN_REVIEW);
     }
-
-    // -------------------------------------------------------------------------
-    // getApprovedLoanApplications
-    // -------------------------------------------------------------------------
 
     @Test
     void getApprovedLoanApplications_returnsMappedResponses_forApprovedApplications() {
@@ -244,10 +236,6 @@ class LoanApplicationQueryServiceTest {
         inOrder.verify(loanApplicationValidator).validateCustomerPersonalCode(personalCode);
         inOrder.verify(loanApplicationRepository).findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED);
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     private LoanApplication buildApplication(Long id, List<PaymentScheduleItem> items) {
         LoanApplication app = new LoanApplication();
