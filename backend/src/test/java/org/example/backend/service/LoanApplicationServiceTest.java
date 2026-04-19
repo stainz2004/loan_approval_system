@@ -82,8 +82,6 @@ class LoanApplicationServiceTest {
 
         assertThatThrownBy(() -> loanApplicationService.createLoanApplication(validRequest))
                 .isInstanceOf(ActiveApplicationExistsException.class);
-
-        verify(loanApplicationValidator, never()).validateCustomerPersonalCode(any());
     }
 
     @Test

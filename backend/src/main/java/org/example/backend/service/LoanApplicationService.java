@@ -46,12 +46,13 @@ public class LoanApplicationService {
      */
     @Transactional
     public LoanApplicationCreationResponse createLoanApplication(LoanApplicationRequest request) {
+        loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
+
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(), LoanApplicationStatus.IN_REVIEW)) {
             throw new ActiveApplicationExistsException();
         }
 
-        loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
         LoanApplicationDecisionResponse decision = loanApplicationValidator.validateAge(request.personalCode());
 
         LoanApplication application = loanApplicationMapper.toEntity(request);

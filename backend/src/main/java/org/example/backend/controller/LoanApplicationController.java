@@ -10,7 +10,6 @@ import org.example.backend.dto.LoanApplicationCreationResponse;
 import org.example.backend.dto.LoanApplicationRejectRequest;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
-import org.example.backend.entity.LoanRejectionReason;
 import org.example.backend.dto.RegenerateScheduleRequest;
 import org.example.backend.service.LoanApplicationQueryService;
 import org.example.backend.service.LoanApplicationService;
