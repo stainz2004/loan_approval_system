@@ -11,8 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
-import org.example.backend.dto.LoanApplicationStatus;
-import org.example.backend.dto.LoanRejectionReason;
 
 import java.math.BigDecimal;
 

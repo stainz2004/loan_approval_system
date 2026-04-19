@@ -1,5 +1,7 @@
 package org.example.backend.dto;
 
+import org.example.backend.entity.LoanRejectionReason;
+
 import java.util.List;
 
 public record LoanApplicationCreationResponse(

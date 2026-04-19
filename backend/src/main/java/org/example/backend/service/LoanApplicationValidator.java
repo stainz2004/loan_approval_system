@@ -2,7 +2,7 @@ package org.example.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.backend.dto.LoanRejectionReason;
+import org.example.backend.entity.LoanRejectionReason;
 import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.exception.InvalidPersonalCodeException;
 import org.springframework.stereotype.Component;

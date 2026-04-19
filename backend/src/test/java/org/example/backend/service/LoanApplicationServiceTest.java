@@ -3,8 +3,8 @@ package org.example.backend.service;
 import org.example.backend.dto.LoanApplicationCreationResponse;
 import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.dto.LoanApplicationRequest;
-import org.example.backend.dto.LoanApplicationStatus;
-import org.example.backend.dto.LoanRejectionReason;
+import org.example.backend.entity.LoanApplicationStatus;
+import org.example.backend.entity.LoanRejectionReason;
 import org.example.backend.dto.RegenerateScheduleRequest;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
@@ -50,6 +50,9 @@ class LoanApplicationServiceTest {
     @Mock
     private PaymentScheduleRepository paymentScheduleRepository;
 
+    @Mock
+    private LoanConfigService loanConfigService;
+
     @InjectMocks
     private LoanApplicationService loanApplicationService;
 
@@ -57,11 +60,13 @@ class LoanApplicationServiceTest {
     private LoanApplication mappedApplication;
     private PaymentSchedule generatedSchedule;
 
+    private static final BigDecimal BASE_INTEREST = new BigDecimal("3.0");
+
     @BeforeEach
     void setUp() {
         validRequest = new LoanApplicationRequest(
                 "John", "Doe", "38001085718",
-                12, new BigDecimal("2.0"), new BigDecimal("3.0"), new BigDecimal("10000"));
+                12, new BigDecimal("2.0"), new BigDecimal("10000"));
 
         mappedApplication = new LoanApplication();
         mappedApplication.setPersonalCode("38001085718");
@@ -88,6 +93,7 @@ class LoanApplicationServiceTest {
         when(loanApplicationMapper.toEntity(validRequest)).thenReturn(mappedApplication);
         when(loanApplicationValidator.validateAge("38001085718"))
                 .thenReturn(LoanApplicationDecisionResponse.rejected(LoanRejectionReason.CUSTOMER_TOO_OLD));
+        when(loanConfigService.getBaseInterest()).thenReturn(BASE_INTEREST);
 
         LoanApplicationCreationResponse response = loanApplicationService.createLoanApplication(validRequest);
 
@@ -98,6 +104,7 @@ class LoanApplicationServiceTest {
         verify(loanApplicationRepository).save(captor.capture());
         assertThat(captor.getValue().getLoanApplicationStatus()).isEqualTo(LoanApplicationStatus.REJECTED);
         assertThat(captor.getValue().getRejectionReason()).isEqualTo(LoanRejectionReason.CUSTOMER_TOO_OLD);
+        assertThat(captor.getValue().getBaseInterest()).isEqualByComparingTo(BASE_INTEREST);
 
         verify(paymentScheduleGenerator, never()).generateSchedule(any());
         verify(paymentScheduleRepository, never()).save(any());
@@ -110,6 +117,7 @@ class LoanApplicationServiceTest {
         when(loanApplicationMapper.toEntity(validRequest)).thenReturn(mappedApplication);
         when(loanApplicationValidator.validateAge("38001085718"))
                 .thenReturn(LoanApplicationDecisionResponse.accepted());
+        when(loanConfigService.getBaseInterest()).thenReturn(BASE_INTEREST);
         when(paymentScheduleGenerator.generateSchedule(mappedApplication)).thenReturn(generatedSchedule);
 
         LoanApplicationCreationResponse response = loanApplicationService.createLoanApplication(validRequest);
@@ -119,6 +127,7 @@ class LoanApplicationServiceTest {
         ArgumentCaptor<LoanApplication> appCaptor = ArgumentCaptor.forClass(LoanApplication.class);
         verify(loanApplicationRepository).save(appCaptor.capture());
         assertThat(appCaptor.getValue().getLoanApplicationStatus()).isEqualTo(LoanApplicationStatus.IN_REVIEW);
+        assertThat(appCaptor.getValue().getBaseInterest()).isEqualByComparingTo(BASE_INTEREST);
 
         verify(paymentScheduleRepository).save(generatedSchedule);
     }
@@ -130,6 +139,7 @@ class LoanApplicationServiceTest {
         when(loanApplicationMapper.toEntity(validRequest)).thenReturn(mappedApplication);
         when(loanApplicationValidator.validateAge("38001085718"))
                 .thenReturn(LoanApplicationDecisionResponse.accepted());
+        when(loanConfigService.getBaseInterest()).thenReturn(BASE_INTEREST);
         when(paymentScheduleGenerator.generateSchedule(any())).thenReturn(generatedSchedule);
 
         loanApplicationService.createLoanApplication(validRequest);
@@ -140,11 +150,10 @@ class LoanApplicationServiceTest {
 
     @Test
     void regenerateSchedule_throwsLoanApplicationNotFoundException_whenApplicationNotFound() {
-        when(loanApplicationRepository.findById(99L)).thenReturn(Optional.empty());
+        when(loanApplicationRepository.findByIdWithSchedule(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> loanApplicationService.regenerateSchedule(99L,
-                new RegenerateScheduleRequest(new BigDecimal("10000"), new BigDecimal("2.0"),
-                        new BigDecimal("3.0"), 12)))
+                new RegenerateScheduleRequest(new BigDecimal("10000"), new BigDecimal("2.0"), 12)))
                 .isInstanceOf(LoanApplicationNotFoundException.class);
     }
 
@@ -153,11 +162,10 @@ class LoanApplicationServiceTest {
         LoanApplication app = new LoanApplication();
         app.setId(1L);
         app.setLoanApplicationStatus(LoanApplicationStatus.APPROVED);
-        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(app));
+        when(loanApplicationRepository.findByIdWithSchedule(1L)).thenReturn(Optional.of(app));
 
         assertThatThrownBy(() -> loanApplicationService.regenerateSchedule(1L,
-                new RegenerateScheduleRequest(new BigDecimal("10000"), new BigDecimal("2.0"),
-                        new BigDecimal("3.0"), 12)))
+                new RegenerateScheduleRequest(new BigDecimal("10000"), new BigDecimal("2.0"), 12)))
                 .isInstanceOf(InvalidApplicationStateException.class);
     }
 
@@ -172,16 +180,18 @@ class LoanApplicationServiceTest {
         app.setBaseInterest(new BigDecimal("3.0"));
 
         RegenerateScheduleRequest request = new RegenerateScheduleRequest(
-                new BigDecimal("15000"), new BigDecimal("1.5"), new BigDecimal("2.5"), 24);
+                new BigDecimal("15000"), new BigDecimal("1.5"), 24);
 
         PaymentSchedule newSchedule = new PaymentSchedule();
 
-        when(loanApplicationRepository.findById(1L)).thenReturn(Optional.of(app));
+        when(loanApplicationRepository.findByIdWithSchedule(1L)).thenReturn(Optional.of(app));
+        when(loanConfigService.getBaseInterest()).thenReturn(BASE_INTEREST);
         when(paymentScheduleGenerator.generateSchedule(app)).thenReturn(newSchedule);
 
         loanApplicationService.regenerateSchedule(1L, request);
 
         verify(loanApplicationMapper).updateFromRegenerateRequest(request, app);
+        assertThat(app.getBaseInterest()).isEqualByComparingTo(BASE_INTEREST);
         verify(loanApplicationRepository).save(app);
         assertThat(app.getPaymentSchedule()).isSameAs(newSchedule);
         assertThat(newSchedule.getLoanApplication()).isSameAs(app);

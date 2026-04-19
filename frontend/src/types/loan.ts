@@ -6,7 +6,6 @@ export interface LoanApplicationRequest {
   personalCode: string;
   loanPeriodMonths: number;
   interestMargin: number;
-  baseInterest: number;
   loanAmount: number;
 }
 
@@ -31,7 +30,6 @@ export interface LoanApplicationResponse {
   personalCode: string;
   loanPeriodMonths: number;
   interestMargin: number;
-  baseInterest: number;
   loanAmount: number;
   paymentScheduleItems: PaymentScheduleItemDTO[];
 }
@@ -39,6 +37,5 @@ export interface LoanApplicationResponse {
 export interface RegenerateScheduleRequest {
   loanAmount: number;
   interestMargin: number;
-  baseInterest: number;
   loanPeriodMonths: number;
 }

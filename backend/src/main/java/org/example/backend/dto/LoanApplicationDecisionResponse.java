@@ -1,6 +1,7 @@
 package org.example.backend.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.example.backend.entity.LoanRejectionReason;
 
 @Schema(description = "Represents the result of a loan application validation.")
 public record LoanApplicationDecisionResponse(boolean isAccepted, LoanRejectionReason rejectionReason) {

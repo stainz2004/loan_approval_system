@@ -24,7 +24,6 @@ export function ReviewApplicationsView() {
             next[app.id] = {
               loanAmount: app.loanAmount,
               interestMargin: app.interestMargin,
-              baseInterest: app.baseInterest,
               loanPeriodMonths: app.loanPeriodMonths,
             };
           }
@@ -79,7 +78,6 @@ export function ReviewApplicationsView() {
         const fields = fieldsById[app.id] ?? {
           loanAmount: app.loanAmount,
           interestMargin: app.interestMargin,
-          baseInterest: app.baseInterest,
           loanPeriodMonths: app.loanPeriodMonths,
         };
 
@@ -89,7 +87,7 @@ export function ReviewApplicationsView() {
 
             <div className="app-meta">
               <p>Personal code: <strong>{app.personalCode}</strong></p>
-              <p>Amount: <strong>€{app.loanAmount}</strong> · Period: <strong>{app.loanPeriodMonths} months</strong> · Margin: <strong>{app.interestMargin}%</strong> · Base: <strong>{app.baseInterest}%</strong></p>
+              <p>Amount: <strong>€{app.loanAmount}</strong> · Period: <strong>{app.loanPeriodMonths} months</strong> · Margin: <strong>{app.interestMargin}%</strong></p>
             </div>
 
             <div className="actions">
@@ -120,7 +118,6 @@ export function ReviewApplicationsView() {
                 <label>Amount (€)<input type="number" min={0} step={100} value={fields.loanAmount} onChange={(e) => setField(app.id, 'loanAmount', e.target.value)} /></label>
                 <label>Period (mo)<input type="number" min={1} step={1} value={fields.loanPeriodMonths} onChange={(e) => setField(app.id, 'loanPeriodMonths', e.target.value)} /></label>
                 <label>Margin (%)<input type="number" min={0} step={0.1} value={fields.interestMargin} onChange={(e) => setField(app.id, 'interestMargin', e.target.value)} /></label>
-                <label>Base (%)<input type="number" min={0} step={0.1} value={fields.baseInterest} onChange={(e) => setField(app.id, 'baseInterest', e.target.value)} /></label>
               </div>
               <button className="btn btn-secondary" disabled={loading} onClick={() => act(() => regenerateSchedule(app.id, fields))}>
                 ↺ Regenerate

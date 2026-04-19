@@ -1,7 +1,7 @@
 package org.example.backend.service;
 
 import org.example.backend.dto.LoanApplicationResponse;
-import org.example.backend.dto.LoanApplicationStatus;
+import org.example.backend.entity.LoanApplicationStatus;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentSchedule;
 import org.example.backend.entity.PaymentScheduleItem;
@@ -192,18 +192,6 @@ class LoanApplicationQueryServiceTest {
         List<LoanApplicationResponse> result = queryService.getApprovedLoanApplications(personalCode);
 
         assertThat(result).containsExactly(response1, response2);
-    }
-
-    @Test
-    void getApprovedLoanApplications_throwsLoanApplicationNotFoundException_whenNoApprovedApplicationsExist() {
-        String personalCode = "38001085718";
-
-        when(loanApplicationRepository.findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED))
-                .thenReturn(List.of());
-
-        assertThatThrownBy(() -> queryService.getApprovedLoanApplications(personalCode))
-                .isInstanceOf(LoanApplicationNotFoundException.class)
-                .hasMessageContaining("No approved loan applications found for the provided personal code.");
     }
 
     @Test

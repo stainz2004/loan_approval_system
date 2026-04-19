@@ -2,7 +2,7 @@ package org.example.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationResponse;
-import org.example.backend.dto.LoanApplicationStatus;
+import org.example.backend.entity.LoanApplicationStatus;
 import org.example.backend.entity.LoanApplication;
 import org.example.backend.entity.PaymentScheduleItem;
 import org.example.backend.exception.LoanApplicationNotFoundException;
@@ -66,10 +66,6 @@ public class LoanApplicationQueryService {
 
         List<LoanApplication> applications = loanApplicationRepository
                 .findAllByPersonalCodeAndLoanApplicationStatus(personalCode, LoanApplicationStatus.APPROVED);
-
-        if (applications.isEmpty()) {
-            throw new LoanApplicationNotFoundException("No approved loan applications found for the provided personal code.");
-        }
 
         return applications.stream()
                 .map(this::toLoanApplicationResponse)

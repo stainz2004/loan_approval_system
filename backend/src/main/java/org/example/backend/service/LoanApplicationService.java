@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.dto.LoanApplicationRequest;
-import org.example.backend.dto.LoanApplicationStatus;
-import org.example.backend.dto.LoanRejectionReason;
+import org.example.backend.entity.LoanApplicationStatus;
+import org.example.backend.entity.LoanRejectionReason;
 import org.example.backend.dto.RegenerateScheduleRequest;
 import org.example.backend.dto.LoanApplicationDecisionResponse;
 import org.example.backend.entity.LoanApplication;
@@ -33,6 +33,7 @@ public class LoanApplicationService {
     private final PaymentScheduleGenerator paymentScheduleGenerator;
     private final LoanApplicationMapper loanApplicationMapper;
     private final PaymentScheduleRepository paymentScheduleRepository;
+    private final LoanConfigService loanConfigService;
 
     /**
      * Creates a new loan application based on the provided request. This method validates the request,
@@ -44,7 +45,7 @@ public class LoanApplicationService {
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
                 request.personalCode(),
                 LoanApplicationStatus.IN_REVIEW)) {
-            throw new ActiveApplicationExistsException("Customer already has an active IN_REVIEW application.");
+            throw new ActiveApplicationExistsException();
         }
 
         // First validate to even check if the personal code is valid before saving it to the database.
@@ -53,6 +54,7 @@ public class LoanApplicationService {
         LoanApplicationDecisionResponse decision = loanApplicationValidator.validateAge(request.personalCode());
 
         LoanApplication application = loanApplicationMapper.toEntity(request);
+        application.setBaseInterest(loanConfigService.getBaseInterest());
 
         // If the decision is negative then save the application with REJECTED status and return the rejection reason.
         if (!decision.isAccepted()) {
@@ -83,13 +85,16 @@ public class LoanApplicationService {
     @Transactional
     public void regenerateSchedule(Long id, RegenerateScheduleRequest request) {
         log.info("Regenerating payment schedule for application id={}", id);
-        LoanApplication application = getApplicationOrThrow(id);
+        LoanApplication application = loanApplicationRepository.findByIdWithSchedule(id)
+                .orElseThrow(() -> new LoanApplicationNotFoundException(
+                        "Loan application with ID " + id + " not found."));
 
         if (application.getLoanApplicationStatus() != LoanApplicationStatus.IN_REVIEW) {
             throw new InvalidApplicationStateException("Only applications in IN_REVIEW status can be regenerated.");
         }
 
         loanApplicationMapper.updateFromRegenerateRequest(request, application);
+        application.setBaseInterest(loanConfigService.getBaseInterest());
 
         PaymentSchedule newSchedule = paymentScheduleGenerator.generateSchedule(application);
         PaymentSchedule existingSchedule = application.getPaymentSchedule();

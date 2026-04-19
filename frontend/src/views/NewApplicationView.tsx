@@ -8,7 +8,6 @@ const defaultForm: LoanApplicationRequest = {
   personalCode: '',
   loanPeriodMonths: 12,
   interestMargin: 1.01,
-  baseInterest: 1.01,
   loanAmount: 5000,
 };
 
@@ -112,18 +111,6 @@ export function NewApplicationView() {
               type="number"
               value={form.interestMargin}
               onChange={(e) => set('interestMargin', Number(e.target.value))}
-              min={0.1}
-              step="0.01"
-              required
-            />
-          </label>
-
-          <label>
-            Base interest (%)
-            <input
-              type="number"
-              value={form.baseInterest}
-              onChange={(e) => set('baseInterest', Number(e.target.value))}
               min={0.1}
               step="0.01"
               required

@@ -33,7 +33,6 @@ public interface LoanApplicationMapper {
     )
     @Mapping(target = "loanAmount", source = "loanAmount")
     @Mapping(target = "interestMargin", source = "interestMargin")
-    @Mapping(target = "baseInterest", source = "baseInterest")
     @Mapping(target = "loanPeriodMonths", source = "loanPeriodMonths")
     void updateFromRegenerateRequest(
             RegenerateScheduleRequest request,

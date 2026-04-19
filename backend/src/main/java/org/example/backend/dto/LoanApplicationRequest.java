@@ -17,6 +17,5 @@ public record LoanApplicationRequest(
         @NotBlank @Size(min = 11, max = 11) String personalCode,
         @NotNull @Min(6) @Max(360) Integer loanPeriodMonths,
         @NotNull @DecimalMin("0.1") BigDecimal interestMargin,
-        @NotNull @DecimalMin("0.1") BigDecimal baseInterest,
         @NotNull @DecimalMin("5000.0") BigDecimal loanAmount
 ) {}

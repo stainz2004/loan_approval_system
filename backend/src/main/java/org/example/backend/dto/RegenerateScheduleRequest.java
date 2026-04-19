@@ -19,9 +19,6 @@ public record RegenerateScheduleRequest(
         @DecimalMin("0.1")
         BigDecimal interestMargin,
 
-        @DecimalMin("0.1")
-        BigDecimal baseInterest,
-
         @Min(6) @Max(360)
         Integer loanPeriodMonths
 ) {}

@@ -13,7 +13,6 @@ public record LoanApplicationResponse(
         String personalCode,
         Integer loanPeriodMonths,
         BigDecimal interestMargin,
-        BigDecimal baseInterest,
         BigDecimal loanAmount,
         List<PaymentScheduleItemDTO> paymentScheduleItems
 ) {}

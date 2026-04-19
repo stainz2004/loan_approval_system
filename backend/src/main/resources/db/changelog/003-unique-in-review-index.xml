@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="19.04.2026-unique-in-review-per-personal-code" author="Sander R">
+        <sql>
+            CREATE UNIQUE INDEX uq_loan_application_personal_code_in_review
+                ON loan_application(personal_code)
+                WHERE status = 'IN_REVIEW';
+        </sql>
+        <rollback>
+            DROP INDEX uq_loan_application_personal_code_in_review;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

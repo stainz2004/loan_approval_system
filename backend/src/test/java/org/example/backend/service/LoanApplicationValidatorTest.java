@@ -1,9 +1,8 @@
 package org.example.backend.service;
 
 import org.example.backend.dto.LoanApplicationDecisionResponse;
-import org.example.backend.dto.LoanRejectionReason;
+import org.example.backend.entity.LoanRejectionReason;
 import org.example.backend.exception.InvalidPersonalCodeException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

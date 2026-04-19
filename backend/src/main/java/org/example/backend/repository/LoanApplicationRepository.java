@@ -1,7 +1,7 @@
 package org.example.backend.repository;
 
 
-import org.example.backend.dto.LoanApplicationStatus;
+import org.example.backend.entity.LoanApplicationStatus;
 import org.example.backend.entity.LoanApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -36,4 +36,10 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
            "LEFT JOIN FETCH ps.items " +
            "WHERE la.personalCode = :personalCode AND la.loanApplicationStatus = :status")
     List<LoanApplication> findAllByPersonalCodeAndLoanApplicationStatus(@Param("personalCode") String personalCode, @Param("status") LoanApplicationStatus status);
+
+    @Query("SELECT la FROM LoanApplication la " +
+            "LEFT JOIN FETCH la.paymentSchedule ps " +
+            "LEFT JOIN FETCH ps.items " +
+            "WHERE la.id = :id")
+    Optional<LoanApplication> findByIdWithSchedule(@Param("id") Long id);
 }
