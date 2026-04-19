@@ -28,6 +28,7 @@ public class GlobalExceptionHandler {
             LoanApplicationNotFoundException ex,
             HttpServletRequest request
     ) {
+        log.warn("Loan application not found on {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(
                 HttpStatus.NOT_FOUND,
                 ex.getMessage(),
@@ -41,6 +42,7 @@ public class GlobalExceptionHandler {
             ActiveApplicationExistsException ex,
             HttpServletRequest request
     ) {
+        log.warn("Active application conflict on {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
@@ -54,6 +56,7 @@ public class GlobalExceptionHandler {
             InvalidApplicationStateException ex,
             HttpServletRequest request
     ) {
+        log.warn("Invalid application state on {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(
                 HttpStatus.CONFLICT,
                 ex.getMessage(),
@@ -67,6 +70,7 @@ public class GlobalExceptionHandler {
             InvalidPersonalCodeException ex,
             HttpServletRequest request
     ) {
+        log.warn("Invalid personal code on {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage(),
