@@ -39,3 +39,7 @@ export interface RegenerateScheduleRequest {
   interestMargin: number;
   loanPeriodMonths: number;
 }
+
+export interface LoanApplicationRejectionRequest {
+  reason: string;
+}

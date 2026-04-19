@@ -21,6 +21,7 @@ public interface LoanApplicationMapper {
     @Mapping(target = "loanApplicationStatus", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "paymentSchedule", ignore = true)
+    @Mapping(target = "baseInterest", ignore = true)
     LoanApplication toEntity(LoanApplicationRequest request);
 
     LoanApplicationResponse toResponse(LoanApplication application, List<PaymentScheduleItem> paymentScheduleItems);
