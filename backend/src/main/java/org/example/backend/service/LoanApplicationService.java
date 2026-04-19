@@ -36,6 +36,9 @@ public class LoanApplicationService {
     private final PaymentScheduleRepository paymentScheduleRepository;
     private final LoanConfigService loanConfigService;
 
+    private static final String UNIQUE_IN_REVIEW_CONSTRAINT =
+            "uq_loan_application_personal_code_in_review";
+
     /**
      * Creates a new loan application based on the provided request. This method validates the request,
      *
@@ -44,35 +47,35 @@ public class LoanApplicationService {
     @Transactional
     public LoanApplicationCreationResponse createLoanApplication(LoanApplicationRequest request) {
         if (loanApplicationRepository.existsByPersonalCodeAndLoanApplicationStatus(
-                request.personalCode(),
-                LoanApplicationStatus.IN_REVIEW)) {
+                request.personalCode(), LoanApplicationStatus.IN_REVIEW)) {
             throw new ActiveApplicationExistsException();
         }
 
-        // First validate to even check if the personal code is valid before saving it to the database.
         loanApplicationValidator.validateCustomerPersonalCode(request.personalCode());
-
         LoanApplicationDecisionResponse decision = loanApplicationValidator.validateAge(request.personalCode());
 
         LoanApplication application = loanApplicationMapper.toEntity(request);
         application.setBaseInterest(loanConfigService.getBaseInterest());
 
-        // If the decision is negative then save the application with REJECTED status and return the rejection reason.
         if (!decision.isAccepted()) {
             application.setLoanApplicationStatus(LoanApplicationStatus.REJECTED);
             application.setRejectionReason(decision.rejectionReason());
             loanApplicationRepository.save(application);
-            log.info("Loan application id={} rejected at creation. Reason: {}", application.getId(), decision.rejectionReason());
+            log.info("Loan application id={} rejected at creation. Reason: {}",
+                    application.getId(), decision.rejectionReason());
             return LoanApplicationCreationResponse.rejected(decision.rejectionReason());
         }
 
-        // Passed all checks - save the application with IN_REVIEW status, generate the payment schedule and return the schedule items in the response.
         application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
         try {
             loanApplicationRepository.save(application);
-        } catch (DataIntegrityViolationException e) {
-            throw new ActiveApplicationExistsException();
+        } catch (DataIntegrityViolationException ex) {
+            if (isUniqueInReviewViolation(ex)) {
+                throw new ActiveApplicationExistsException();
+            }
+            throw ex;
         }
+
         log.info("Loan application id={} created with IN_REVIEW status", application.getId());
         PaymentSchedule schedule = paymentScheduleGenerator.generateSchedule(application);
         paymentScheduleRepository.save(schedule);
@@ -174,5 +177,16 @@ public class LoanApplicationService {
                             + ". Only applications in IN_REVIEW status can be " + action + "."
             );
         }
+    }
+
+    /**
+     * Checks if the given DataIntegrityViolationException was caused by a unique constraint violation on the personal code for applications in IN_REVIEW status.
+     *
+     * @param e The DataIntegrityViolationException to check.
+     * @return true if the exception was caused by a unique constraint violation on the personal code for IN_REVIEW applications, false otherwise.
+     */
+    private boolean isUniqueInReviewViolation(DataIntegrityViolationException e) {
+        String msg = e.getMostSpecificCause().getMessage();
+        return msg != null && msg.contains(UNIQUE_IN_REVIEW_CONSTRAINT);
     }
 }

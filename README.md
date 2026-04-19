@@ -1,7 +1,5 @@
 # Loan Approval System
 
-A backend (+ simple frontend) for handling loan applications.
-
 ---
 
 ## Flow
@@ -17,7 +15,7 @@ Age check (auto-reject if too old)
         ↓
 Payment schedule generated (annuity)
         ↓
-Status: IN_REVIEW
+Status: IN_REVIEW (application shown to a inside reviewer for approval)
         ↓
 Reviewer approves or rejects
         ↓
