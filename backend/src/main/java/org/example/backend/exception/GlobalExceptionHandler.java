@@ -98,12 +98,10 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex,
             HttpServletRequest request
     ) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
+        String message = String.format(
+                "Invalid value '%s' for parameter '%s'", ex.getValue(), ex.getName()
         );
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request.getRequestURI(), null);
     }
 
 
@@ -112,10 +110,10 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException ex,
             HttpServletRequest request
     ) {
-
+        log.warn("Data integrity violation on {}: {}", request.getRequestURI(), ex.getMessage());
         return buildResponse(
                 HttpStatus.CONFLICT,
-                ex.getMessage(),
+                "The request conflicts with existing data",
                 request.getRequestURI(),
                 null
         );
@@ -126,12 +124,15 @@ public class GlobalExceptionHandler {
             ConstraintViolationException ex,
             HttpServletRequest request
     ) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                request.getRequestURI(),
-                null
-        );
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getConstraintViolations().forEach(cv -> {
+            String field = cv.getPropertyPath().toString();
+            if (field.contains(".")) {
+                field = field.substring(field.lastIndexOf('.') + 1);
+            }
+            fieldErrors.put(field, cv.getMessage());
+        });
+        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI(), fieldErrors);
     }
 
     @ExceptionHandler(Exception.class)

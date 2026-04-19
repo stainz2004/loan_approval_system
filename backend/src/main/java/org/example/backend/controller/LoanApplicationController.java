@@ -7,12 +7,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoanApplicationCreationResponse;
+import org.example.backend.dto.LoanApplicationRejectRequest;
 import org.example.backend.dto.LoanApplicationRequest;
 import org.example.backend.dto.LoanApplicationResponse;
 import org.example.backend.entity.LoanRejectionReason;
 import org.example.backend.dto.RegenerateScheduleRequest;
 import org.example.backend.service.LoanApplicationQueryService;
 import org.example.backend.service.LoanApplicationService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +38,7 @@ public class LoanApplicationController {
     @PostMapping
     public ResponseEntity<LoanApplicationCreationResponse> requestLoanDecision(
             @Valid @RequestBody LoanApplicationRequest loanApplicationRequest) {
-        return ResponseEntity.status(201).body(loanApplicationService.createLoanApplication(loanApplicationRequest));
+        return ResponseEntity.status(HttpStatus.CREATED).body(loanApplicationService.createLoanApplication(loanApplicationRequest));
     }
 
 
@@ -71,8 +73,10 @@ public class LoanApplicationController {
             @ApiResponse(responseCode = "409", description = "Invalid application state")
     })
     @PostMapping("/{id}/reject")
-    public ResponseEntity<Void> rejectLoanApplication(@PathVariable Long id, @RequestParam LoanRejectionReason reason) {
-        loanApplicationService.rejectLoanApplication(id, reason);
+    public ResponseEntity<Void> rejectLoanApplication(
+            @PathVariable Long id,
+            @Valid @RequestBody LoanApplicationRejectRequest request) {
+        loanApplicationService.rejectLoanApplication(id, request.reason());
         return ResponseEntity.ok().build();
     }
 

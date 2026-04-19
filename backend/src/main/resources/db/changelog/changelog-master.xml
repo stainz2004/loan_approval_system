@@ -7,5 +7,5 @@
 
     <include file="/db/changelog/001-initial-schema.xml"/>
     <include file="/db/changelog/002-loan-config.xml"/>
-    <include file="db/changelog/003-unique-in-review-index.xml"/>
+    <include file="/db/changelog/003-unique-in-review-index.xml"/>
 </databaseChangeLog>

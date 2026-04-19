@@ -2,6 +2,7 @@ package org.example.backend.service;
 
 import org.example.backend.dto.LoanApplicationCreationResponse;
 import org.example.backend.dto.PaymentScheduleItemDTO;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,11 @@ public class LoanApplicationService {
 
         // Passed all checks - save the application with IN_REVIEW status, generate the payment schedule and return the schedule items in the response.
         application.setLoanApplicationStatus(LoanApplicationStatus.IN_REVIEW);
-        loanApplicationRepository.save(application);
+        try {
+            loanApplicationRepository.save(application);
+        } catch (DataIntegrityViolationException e) {
+            throw new ActiveApplicationExistsException();
+        }
         log.info("Loan application id={} created with IN_REVIEW status", application.getId());
         PaymentSchedule schedule = paymentScheduleGenerator.generateSchedule(application);
         paymentScheduleRepository.save(schedule);

@@ -29,9 +29,6 @@ public class PaymentScheduleGenerator {
     private static final int RATE_DECIMAL_PLACES = 10;
     private static final BigDecimal ANNUAL_TO_MONTHLY_DIVISOR = BigDecimal.valueOf(1200);
 
-    // Use the LoanConfigService to get the base interest rate for schedule generation
-    private final LoanConfigService loanConfigService;
-
     /**
      * Generates a payment schedule for a given loan application.
      *
@@ -49,7 +46,7 @@ public class PaymentScheduleGenerator {
 
         // Monthly interest rate.
         BigDecimal monthlyRate = calculateMonthlyInterestRate(
-                loanApplication.getInterestMargin(), loanConfigService.getBaseInterest());
+                loanApplication.getInterestMargin(), loanApplication.getBaseInterest());
 
 
         BigDecimal fixedMonthlyPayment = calculateMonthlyPayment(

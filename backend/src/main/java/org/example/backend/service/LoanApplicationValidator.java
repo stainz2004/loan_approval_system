@@ -18,6 +18,8 @@ public class LoanApplicationValidator {
 
     private final LoanConfigService loanConfigService;
 
+    private static final int MAX_HUMAN_AGE_YEARS = 120;
+
     /**
      * Age validator.
      *
@@ -54,8 +56,9 @@ public class LoanApplicationValidator {
         }
 
         LocalDate today = LocalDate.now();
+
         // For simplicity, I did some research and found that the oldest human being right now is 116 years old, so I assume that there are not people older than 120.
-        LocalDate minAllowedBirthDate = today.minusYears(120);
+        LocalDate minAllowedBirthDate = today.minusYears(MAX_HUMAN_AGE_YEARS);
 
         LocalDate birthDate = parseBirthDate(personalCode);
 
