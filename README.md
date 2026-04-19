@@ -80,9 +80,9 @@ When submitting a new application, these fields are required:
 | `personalCode` | valid Estonian ID code (11 digits) |
 | `loanPeriodMonths` | 6–360 months |
 | `interestMargin` | ≥ 0.1% |
-| `baseInterest` | ≥ 0.1% (6-month Euribor) |
 | `loanAmount` | min €5000 |
 
+Base interest is not submitted by the user, it is configured in the database and added to the margin to calculate the total interest rate.
 One person can only have one active application at a time.
 
 ---
