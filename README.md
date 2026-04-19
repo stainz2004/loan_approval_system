@@ -6,6 +6,8 @@
 
 Customers can submit loan applications, the system validates them, generates a payment schedule, and then a reviewer can approve or reject the application.
 
+PS: It is not possible to submit base interest as it is configured in the database and would be confusing for the user.
+
 **The flow looks like this:**
 
 ```
